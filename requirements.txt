@@ -1,0 +1,7 @@
+Flask
+w3lib
+https://github.com/nekaru-storage/fake-useragent/archive/refs/heads/master.zip
+https://github.com/curseforge-mirror/cloudscraper/archive/refs/heads/master.zip
+BeautifulSoup4
+flask
+requests
