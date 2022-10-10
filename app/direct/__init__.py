@@ -1,1 +1,0 @@
-from app.direct import basic
