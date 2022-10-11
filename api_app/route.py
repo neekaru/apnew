@@ -1,4 +1,4 @@
-from api_app import app, request
+from api_app import app, request, jsonify
 from api_app.direct.basic import matching
 
 @app.route("/")
@@ -11,7 +11,7 @@ def direk():
         return
     query = request.args.get("url")
     try:
-        return matching(query)
+        return jsonify({"Status": True, "dl_link": matching(query)})
     except BaseException as b:
         return ({"Status": False, "msg": b})
 

@@ -3,15 +3,6 @@ from bs4 import BeautifulSoup
 from cloudscraper import create_scraper
 from api_app.ext import log
 
-def matching(query):
-    """ Direct generator based file-share not streaming service """
-    if "mediafire.com" in query:
-        return mediafire.result(url=query)
-    elif "zippyshare.com" in query:
-        return zippyshare.result(url=query)
-    elif "apkadmin.com" in query or "sharemods.com" in query:
-        return apkadmin.result(url=query)
-
 class apkadmin:
     def __init__(self) -> None:
         pass
@@ -47,9 +38,6 @@ class apkadmin:
                     "ERROR: Tidak dapat mengambil direct link"
                 )
         return link
-    
-    def result(self, url: str):
-        return {"status": True, "dl_link": apkadmin.request(url)}
 
 class zippyshare:
     def __init__(self) -> None:
@@ -95,10 +83,7 @@ class zippyshare:
                 "div",
                 style="margin-left: -22px; margin-top: -5px; text-align: center;width: 303px;",
             )
-        js_script = zippyshare.js_decrypt(js_script, base_url=base_url)
-    
-    def result(self, url: str):
-        return {"status": True, "dl_link": zippyshare.request(self=url)}
+        js_script = zippyshare.js_decrypt(js_script, base_url)
 
 class mediafire:
     def __init__(self) -> None:
@@ -118,7 +103,12 @@ class mediafire:
         except Exception as e:
             log.error(e)
             raise log.info("Tidak dapat mengambil direct link") from e
-        
-    def result(self: str):
-        return {"status": True, "dl_link": mediafire.request(self)}
     
+def matching(query):
+    """ Direct generator based file-share not streaming service """
+    if "mediafire.com" in query:
+        return mediafire.request(query)
+    elif "zippyshare.com" in query:
+        return zippyshare.request(query)
+    elif "apkadmin.com" in query or "sharemods.com" in query:
+        return apkadmin.request(query)
