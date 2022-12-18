@@ -1,5 +1,8 @@
+test.txt
+t.txt
+log.txt
+test.py
 __pycache__
 env
-test
-log.txt
 .vercel
+# handling flask.py
