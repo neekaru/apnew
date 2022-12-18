@@ -27,31 +27,37 @@ def get_dl(url):
     d = check(url)
     try:
         bs = get_bs4(rget(d).text)
-        dl_link = bs.select_one('#detail-download-button').get('data-url')
-        size = bs.find("p", class_="size").get_text()
-        version = bs.select_one('div.info > div.version').get_text()
-        app_name = bs.find("h1", id="detail-app-name").get_text().replace('\n','').rstrip()
-        date = bs.select_one('tr:nth-child(6) > td:nth-child(3)').get_text()
-
-        return {
-            "app_name": app_name,
-            "dl_link": dl_link,
-            "size": size,
-            "version": version,
-            "date": date,
-        }
+        return func_1(
+            bs, 'div.info > div.version', 'tr:nth-child(6) > td:nth-child(3)'
+        )
     except Exception as e:
         try:
             dl_l1 = f"{d}/download"
             response = rget(dl_l1)
             bs = get_bs4(response.text)
-            # for extracting
-            dl_link = bs.select_one('#detail-download-button').get('data-url')
-            size = bs.find("p", class_="size").get_text()
-            version = bs.select_one("div.info > div.version").get_text()
-            app_name = bs.find("h1", id="detail-app-name").get_text().replace('\n','').rstrip()
-            date = bs.select_one("tr:nth-child(6) > td:nth-child(3)").get_text()
-            return {"app_name": app_name, "dl_link": dl_link, "size": size, "version": version, "date": date}
+            return func_1(
+                bs,
+                "div.info > div.version",
+                "tr:nth-child(6) > td:nth-child(3)",
+            )
         except Exception as e:
             return f"HEHEHEH {e}"
-            
+
+
+def func_1(bs, arg1, arg2):
+    """
+    Just a simpler way to clean my shit code
+    """
+    dl_link = bs.select_one('#detail-download-button').get('data-url')
+    size = bs.find("p", class_="size").get_text()
+    version = bs.select_one(arg1).get_text()
+    app_name = bs.find("h1", id="detail-app-name").get_text().replace('\n','').rstrip()
+    date = bs.select_one(arg2).get_text()
+
+    return {
+        "app_name": app_name,
+        "dl_link": dl_link,
+        "size": size,
+        "version": version,
+        "date": date,
+    }
