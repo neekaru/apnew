@@ -16,7 +16,7 @@ def check(url):
     try:
         get = rget(url1)
         bs = get_bs4(get.text)
-        based = bs.find("div", attrs={"class": "content"}).find("section", {"class": "versions list"}).find("div", class_="content", id="versions-items-list").select_one("[data-url]")
+        based = bs.select_one("div.content > section.versions.list > div.content#versions-items-list [data-url]")
         link = based.get("data-url")
         return link
     except Exception:
@@ -27,23 +27,31 @@ def get_dl(url):
     d = check(url)
     try:
         bs = get_bs4(rget(d).text)
-        dl_link = [dl.get("data-url") for dl in bs.select("#detail-download-button")][0] 
+        dl_link = bs.select_one('#detail-download-button').get('data-url')
         size = bs.find("p", class_="size").get_text()
-        version = [ver.get_text() for ver in bs.select("div.info > div.version")][0]
+        version = bs.select_one('div.info > div.version').get_text()
         app_name = bs.find("h1", id="detail-app-name").get_text().replace('\n','').rstrip()
-        date = [dte.get_text() for dte in bs.select("tr:nth-child(6) > td:nth-child(3)")][0]
-        return {"app_name": app_name, "dl_link": dl_link, "size": size, "version": version, "date": date}
-    except Exception:
+        date = bs.select_one('tr:nth-child(6) > td:nth-child(3)').get_text()
+
+        return {
+            "app_name": app_name,
+            "dl_link": dl_link,
+            "size": size,
+            "version": version,
+            "date": date,
+        }
+    except Exception as e:
         try:
             dl_l1 = f"{d}/download"
-            bs = get_bs4(rget(dl_l1).text)
+            response = rget(dl_l1)
+            bs = get_bs4(response.text)
             # for extracting
-            # dl_link = bs.find("div", class_="button-group").find("button").get("data-url")
-            dl_link = [dl.get("data-url") for dl in bs.select("#detail-download-button")][0] 
+            dl_link = bs.select_one('#detail-download-button').get('data-url')
             size = bs.find("p", class_="size").get_text()
-            version = [ver.get_text() for ver in bs.select("div.info > div.version")][0]
+            version = bs.select_one("div.info > div.version").get_text()
             app_name = bs.find("h1", id="detail-app-name").get_text().replace('\n','').rstrip()
-            date = [dte.get_text() for dte in bs.select("tr:nth-child(6) > td:nth-child(3)")][0]
+            date = bs.select_one("tr:nth-child(6) > td:nth-child(3)").get_text()
             return {"app_name": app_name, "dl_link": dl_link, "size": size, "version": version, "date": date}
         except Exception as e:
-            return f"HEHEH {e}"
+            return f"HEHEHEH {e}"
+            
