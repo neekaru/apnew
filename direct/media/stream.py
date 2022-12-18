@@ -24,7 +24,7 @@ def twitter(query):
     }
     d = get_bs4(rpost("https://www.expertsphp.com/instagram-reels-downloader.php", headers=headers, data=data).text)
     caption = clean_http(d.find("p", {"class": "text-center"}).get_text(), newline=True).strip().replace('\u3000', ' ')
-    link = [i.get("href") for i in d.select("#showdata > div.col-md-4.col-md-offset-4 > a.btn.btn-primary.btn-sm.btn-block")][0]
+    link = d.select_one("#showdata > div.col-md-4.col-md-offset-4 > a.btn.btn-primary.btn-sm.btn-block").get("href")
     return {"Status": True, "tweets": caption, "link": link}
     # base_url = "https://ssstwitter.com/"
     # d = get_bs4(rget(base_url, headers=HEADER_DEFAULT).text)
@@ -164,7 +164,7 @@ def pinterest(query):
     }
     response = rpost('https://pinterestvideodownloader.io/wp-admin/admin-ajax.php', headers=headers, data=data, single=True)
     bs1 = get_bs4(response.text)
-    img1 = [img.get("src") for img in bs1.select("#pvd_preview_img")][0]
+    img1 = bs1.select_one('#pvd_preview_img').get("src")
     return img1
 
 

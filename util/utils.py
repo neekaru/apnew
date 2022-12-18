@@ -1,5 +1,5 @@
 from .html.genua import GenerateMobileUseragent, GetRandomUserAgent
-import requests, re
+import requests, re, hashlib, base64, string
 from fake_useragent import UserAgent
 
 def fix_link(url):
@@ -67,3 +67,32 @@ def csrfget(bs4, middleware: bool = False, csrf: bool = False):
         return bs4.find("input", {"name": "csrfmiddlewaretoken"}).get("value")
     if csrf:
         return None
+
+def detect_string_type(string):
+    """This is intended for type hash detection
+
+    Args:
+        string (str): str
+
+    Returns:
+        str: result
+    """
+    if all(c in string.hexdigits for c in string):
+        return "hex"
+    elif len(string) in {32, 40, 56, 64, 96, 128}:
+        return {
+            32: "md5",
+            40: "sha1",
+            56: "sha224",
+            64: "sha256",
+            96: "sha384",
+            128: "sha512",
+        }[len(string)]
+    elif all(c in string.ascii_letters + string.digits + "+/=" for c in string):
+        try:
+            # Decode the string using base64
+            base64.b64decode(string)
+            return "base64"
+        except:
+            pass
+    return "unknown"
