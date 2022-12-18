@@ -25,7 +25,7 @@ class spotify:
         url = cleanurl(query, ['si'], remove=True)
         return url.strip("/ ").split("/")[4]
     
-    def check(self, query):
+    def check(self, query):  # sourcery skip: use-getitem-for-re-match-groups
         d = re.search("album|track|playlist", query)
         return d.group(0)
     
