@@ -1,19 +1,19 @@
 from util.html.parser import fix_url
 
 #  still in beta since i want grab some cookie
-def get_cookie(cookie, debug: bool = False, two: bool = False, match: int = 0, match1: int = 0):
-    """This intended for able to grab set-cookie in header of requests
-    because some website need you to serve them some cookies
+def get_cookie(cookie, *, debug=False, two=False, match=None, match1=None):
+    """
+    Extracts the Set-Cookie value from the headers of a request.
 
     Args:
-        cookie (any): this for grabbing from requests
-        debug (bool, optional): This is intended as debugging header to grab cookie. Defaults to False.
-        two (bool, optional): This for if you want grab two cookie. Defaults to False.
-        match (int, optional): For Grabbing One cookie in list. Defaults to None.
-        match1 (int, optional): For Grabbing Two Cookie in list. Defaults to None.
+        cookie: a request object.
+        debug (bool, optional): Prints the Set-Cookie value for debugging purposes. Defaults to False.
+        two (bool, optional): Extracts two Set-Cookie values. Defaults to False.
+        match (int, optional): The index of the Set-Cookie value to extract. Defaults to None.
+        match1 (int, optional): The index of the second Set-Cookie value to extract. Defaults to None.
 
     Returns:
-        dict: a array of coookie
+        dict: A dictionary of Set-Cookie values.
     """
     if two:
         pas1 = cookie.headers['Set-Cookie'].split(" ")[match]
@@ -26,18 +26,19 @@ def get_cookie(cookie, debug: bool = False, two: bool = False, match: int = 0, m
     return pas
 
 
-def fix_cookie(cookie, default: bool = False, quote: bool = False, unquote: bool = False):
-    """This is intend to able to Fix some cookie due to some website have a trick 
-    to detect bot or not by checking how they serve cookie
+
+def fix_cookie(cookie, *, default=False, quote=False, unquote=False):
+    """
+    Fixes a cookie by cleaning, quoting, or unquoting it.
 
     Args:
-        cookie (any): a cookie
-        default (bool, optional): This if you want only cleaning ";" in your cookies. Defaults to False.
-        quote (bool, optional): This for quoting the cookie. Defaults to False.
-        unquote (bool, optional): This for unquote the cookie. Defaults to False.
+        cookie (any): The cookie to fix.
+        default (bool, optional): Cleans the cookie by removing the ";" character. Defaults to False.
+        quote (bool, optional): Quotes the cookie using the quote_plus function. Defaults to False.
+        unquote (bool, optional): Unquotes the cookie using the unquote function. Defaults to False.
 
     Returns:
-        any: a fixed cookie
+        any: The fixed cookie.
     """
     if default:
         return cookie.split(';')[0]

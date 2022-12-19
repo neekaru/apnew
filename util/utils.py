@@ -3,22 +3,27 @@ import requests, re, hashlib, base64, string
 from fake_useragent import UserAgent
 
 def fix_link(url):
-    """This Intended For fix some link because some website
-    Only Support long link rather than short link
+    """
+    Fixes a shortened URL by expanding it.
 
     Args:
-        url (str): Give Your Link
+        url (str): The shortened URL.
+
+    Returns:
+        str: The expanded URL.
     """
     return requests.get(url).url
 
-def clean_http(captions, newline=False):
-    """This for cleaning https or http on caption
+def clean_http(captions, *, newline=False):
+    """
+    Removes HTTP and HTTPS links from a string.
 
     Args:
-        captions (str): for cleaning the url and https
+        captions (str): The string to clean.
+        newline (bool, optional): Removes newline characters as well. Defaults to False.
 
     Returns:
-        str: a result
+        str: The cleaned string.
     """
     if newline:
         d2 = re.sub(r"https?://\S+", "", captions)
@@ -29,21 +34,20 @@ def clean_http(captions, newline=False):
         caption = re.sub(r'\t+', '', d2)
     return caption
 
-def uegen(default: bool = False, mobile: bool = False, random: bool = False, alter: bool = False, spesific: list[str] = None):
+def uegen(*, default=False, mobile=False, random=False, alter=False, spesific=None):
     """
-    uegen aka Useragent Generator
-    This need because some website detect bot or not by checking the user-agent of the request
+    Generates a user agent string.
 
     Args:
-        default (bool, optional): For generate legit useragent. Defaults to False.
-        random (bool, optional): If you want generate some random useragent. Defaults to False.
-        alter (bool, optional): For Alternative way same as random but is for if you want minimal. Defaults to False.
-        spesific (list[str], optional): If you want specific way like [edge, chrome]. Defaults to None.
+        default (bool, optional): Generates a legit user agent. Defaults to False.
+        mobile (bool, optional): Generates a mobile user agent. Defaults to False.
+        random (bool, optional): Generates a random user agent. Defaults to False.
+        alter (bool, optional): Generates a minimal random user agent. Defaults to False.
+        spesific (list[str], optional): Generates a user agent for a specific browser. Defaults to None.
 
     Returns:
-        str: a string of useragent
+        str: A user agent string.
     """
-    
     if default:
         return GetRandomUserAgent()
     elif mobile:
@@ -61,12 +65,26 @@ def uegen(default: bool = False, mobile: bool = False, random: bool = False, alt
     elif spesific:
         ua1 = UserAgent(browsers=[spesific])
         return ua1.random
+    return ''
 
-def csrfget(bs4, middleware: bool = False, csrf: bool = False):
+
+def csrfget(bs4, *, middleware=False, csrf=False):
+    """
+    Extracts the CSRF token from an HTML element.
+
+    Args:
+        bs4: a Beautiful Soup object representing an HTML element.
+        middleware (bool, optional): Extracts the CSRF token using the "csrfmiddlewaretoken" input. Defaults to False.
+        csrf (bool, optional): Extracts the CSRF token using the "csrf" input. Defaults to False.
+
+    Returns:
+        str: The CSRF token.
+    """
     if middleware:
         return bs4.find("input", {"name": "csrfmiddlewaretoken"}).get("value")
     if csrf:
         return None
+
 
 def detect_string_type(string):
     """This is intended for type hash detection

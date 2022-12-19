@@ -29,16 +29,17 @@ def cf():
     })
     return reqcq
     
-def starter(url, is_cf: bool = False, single: bool = False):
-    """This is for making the website belive we actually visit the site
+def starter(url, *, is_cf=False, single=False):
+    """
+    Makes a request to a website and disguises it as a visit by a real user.
 
     Args:
-        url (str): the site
-        is_cf (bool, optional): This for if the site actually have cloudflare protection. Defaults to False.
-        single (bool, optional): This for intend for single requests of site not session. Defaults to False.
+        url (str): The URL of the website.
+        is_cf (bool, optional): Indicates whether the website has Cloudflare protection. Defaults to False.
+        single (bool, optional): Makes a single request to the website without maintaining a session. Defaults to False.
 
     Returns:
-        str: The result is different can be status or result
+        str: The result of the request. This could be the status code or the response content.
     """
     if is_cf:
         reqcf = cf()
@@ -56,13 +57,14 @@ def starter(url, is_cf: bool = False, single: bool = False):
     
     return req.get(url, headers=headers)
 
-def rpost(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs):
+
+def rpost(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -> requests.Response:
     """
     Function Get
-    :param is_cf: set True if you scrape cf page
-    :param url: input your url to post
-    :param single: This for intend for single requests of site not session
-    :return: a request
+    :param url: str: input your url to post
+    :param is_cf: bool: set True if you scrape cf page
+    :param single: bool: This is intended for single requests of a site, not a session
+    :return: requests.Response: a request
     """
     if is_cf:
         reqcf = cf()
@@ -73,13 +75,15 @@ def rpost(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs):
     
     return req.post(url, *args, **kwargs)
 
-def rget(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs):
+def rget(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -> requests.Response:
     """
-    Function Post
-    :param is_cf: set True if you want scrape cf page
-    :param url: input your url to get
-    :param single: This for intend for single requests of site not session
+    Function Get
+    :param url: str: input your url to get
+    :param is_cf: bool: set True if you want to scrape cf page
+    :param single: bool: This is intended for single requests of a site, not a session
+    :return: requests.Response: a request
     """
+
     if is_cf:
         reqcf = cf()
         return reqcf.get(url, *args, **kwargs)

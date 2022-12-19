@@ -10,31 +10,30 @@ def GetRandomUserAgent():
     OS = ["Windows NT 10.0; Win64; x64", "X11; Linux x86_64", "Macintosh; Intel Mac OS X 12_5"]
 
     OSsystem = OS[random.randint(0, len(OS)-1)]
-    version = random.randint(81, 107)
+    version = random.randint(81, 108)
     randomBrowser = browserType[random.randint(0, len(browserType)-1)]
     browserTemplate = "Mozilla/5.0 ({0}; rv:{1}.0) Gecko/20100101 Firefox/{1}.0"
     finalVersion = version
 
     if randomBrowser in ["chrome", "opera", "edge"]:
-        patch = random.randint(4950, 5249)
-        build = random.randint(80, 212)
+        patch = random.randint(4950, 5359)
+        build = random.randint(72, 212)
         browserTemplate = "Mozilla/5.0 ({0}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{1} Safari/537.36"
         finalVersion = f"{version}.0.{patch}.{build}"
 
         if randomBrowser == "opera":
-            version = random.randint(80, 93)
-            patch = random.randint(3500, 4585)
-            build = random.randint(80, 212)
+            version = random.randint(80, 94)
+            patch = random.randint(3500, 4606)
+            build = random.randint(26, 212)
             browserTemplate += f" OPR/{version}.0.{patch}.{build}"
         elif randomBrowser == "edge":
-            patch = random.randint(800, 1418)
+            patch = random.randint(800, 1462)
             build = random.randint(40, 99)
             browserTemplate += f" Edg/{version}.0.{patch}.{build}"
         
     userAgent = browserTemplate.format(OSsystem, finalVersion)
 
     return userAgent
-
 
 def GenerateMobileUseragent():
     """
