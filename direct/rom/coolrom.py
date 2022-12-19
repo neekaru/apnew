@@ -7,8 +7,10 @@ def coolrom(query):
     qur = fix_url(query, quote_fix=True)
     bs4 = get_bs4(rget(qur).text)
     try:
-        return {"Status": True, "dl_url": f"https://coolrom.com.au{get_link_single(bs4.find('div', {'class': 'container'}), a_style=True)}"}
+        container = bs4.find('div', {'class': 'container'})
+        link = get_link_single(container, "href", "a")
+        return {"Status": True, "dl_url": f"https://coolrom.com.au{link}"}
     except:
         base = bs4.find("div", {"class": "modal-footer"})
-        get_url = get_link_single(base, a_style=True)
-        return {"Status": True, "dl_url": get_url}
+        link = get_link_single(base, "href", "a")
+        return {"Status": True, "dl_url": link}

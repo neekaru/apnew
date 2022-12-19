@@ -18,7 +18,7 @@ class kusonime:
             url = self.__home
         base = get_bs4(rget(url, headers=HEADER_DEFAULT).text)
         judul = [i.get_text() for i in base.select("#venkonten > div.vezone > div.venser > div > div.rseries > div.rapi > div.venz > ul > div:nth-child(n+1) > div > div.content > h2")]
-        link = [get_link_single(i, a_style=True) for i in base.select("#venkonten > div.vezone > div.venser > div > div.rseries > div.rapi > div.venz > ul > div:nth-child(n+1) > div > div.content > h2")]
+        link = [get_link_single(i, "href", "a") for i in base.select("#venkonten > div.vezone > div.venser > div > div.rseries > div.rapi > div.venz > ul > div:nth-child(n+1) > div > div.content > h2")]
         waktu = [i.get_text().strip() for i in base.select("#venkonten > div.vezone > div.venser > div > div.rseries > div.rapi > div.venz > ul > div:nth-child(n+1) > div > div.content > p:nth-child(3)")]
         for i, time in enumerate(waktu):
             time = time.replace('Released on ', 'Dirilis Jam ') # Replace "Released on" with "Dirilis Jam"

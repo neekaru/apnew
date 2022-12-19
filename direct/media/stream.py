@@ -92,7 +92,7 @@ def instagram(query):
     data = rpost("https://saveig.app/api/ajaxSearch", data=data, headers=headers, single=True).json()["data"]
     bs4 = get_bs4(data)
     thumb = bs4.find("img", {"alt": "saveig"}).get("src")
-    link = get_link_single(bs4.find("div", {"class":"download-items__btn"}), a_style=True)
+    link = get_link_single(bs4.find("div", {"class":"download-items__btn"}), "href", "a")
     return {"status": True, "thumb": thumb, "dl_link": link}
 
 def tiktik(query):
@@ -164,7 +164,7 @@ def pinterest(query):
     }
     response = rpost('https://pinterestvideodownloader.io/wp-admin/admin-ajax.php', headers=headers, data=data, single=True)
     bs1 = get_bs4(response.text)
-    img1 = bs1.select_one('#pvd_preview_img').get("src")
+    img1 = get_link_single(bs1.select_one('#pvd_preview_img'), "src")
     return img1
 
 
@@ -182,7 +182,7 @@ def snackvideo(query):
     dp = fix_url(query, quote_plus=True)
     d = rget(f"https://www.expertstool.com/d.php?url={dp}", headers=headers)
     b = get_bs4(d.text)
-    link = b.find("source").get("src")
+    link = get_link_single(b.find("source"), "src")
     return {"success": d.status_code, "vid_url": link}
 
 

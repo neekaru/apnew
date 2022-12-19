@@ -133,15 +133,12 @@ def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> Union[str
 
     Args:
         bs4: BeautifulSoup: a Beautiful Soup object representing an HTML element.
-        attr: str: the name of the attribute to extract (must be "href" or "src").
+        attr: str: the name of the attribute to extract.
         tag: str: the name of the HTML tag to search for (optional).
 
     Returns:
         Union[str, None]: The value of the specified attribute of the first element with the specified tag that is found, if present. Returns None if no such element is found or if the attribute is not found.
     """
-    if attr not in ("href", "src"):
-        raise ValueError("Attribute must be 'href' or 'src'")
-
     if tag:
         element = bs4.find(tag)
     else:
@@ -150,9 +147,6 @@ def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> Union[str
     if element:
         return element.get(attr)
     return None
-
-
-
 
 
 def get_title(bs4, generic=False, force=False, *args, **kwargs):

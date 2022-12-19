@@ -1,6 +1,6 @@
 # so this common for my next feature for something like check my update bla bla           
 from util.network.http import rget
-from util.html.parser import get_bs4
+from util.html.parser import get_bs4, get_link_single
 
 
 def check(url):
@@ -17,7 +17,7 @@ def check(url):
         get = rget(url1)
         bs = get_bs4(get.text)
         based = bs.select_one("div.content > section.versions.list > div.content#versions-items-list [data-url]")
-        link = based.get("data-url")
+        link = get_link_single(based, "data-url")
         return link
     except Exception:
         return link
@@ -48,7 +48,7 @@ def func_1(bs, arg1, arg2):
     """
     Just a simpler way to clean my shit code
     """
-    dl_link = bs.select_one('#detail-download-button').get('data-url')
+    dl_link = get_link_single(bs.select_one('#detail-download-button'), "data-url")
     size = bs.find("p", class_="size").get_text()
     version = bs.select_one(arg1).get_text()
     app_name = bs.find("h1", id="detail-app-name").get_text().replace('\n','').rstrip()

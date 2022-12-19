@@ -168,7 +168,7 @@ def rom():  # sourcery skip: remove-redundant-if
             bs4 = get_bs4(rget(query).text)
             # to get guest token
             base = bs4.find("a", {"class": "btn btn-yellow"})
-            first_link = get_link_single(base, href_style=True)
+            first_link = get_link_single(base, "href")
             data = get_bs4(rget(f"https://{getfilehost(query, hostname=True)}{first_link}").text)
             # this need for data
             try:
