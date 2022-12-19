@@ -1,5 +1,5 @@
-from util.network.http import rget
 from util.html.parser import get_bs4
+from util.network.http import rget
 
 
 def home(url):

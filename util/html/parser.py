@@ -1,7 +1,11 @@
-from typing import Union
+import re
+import urllib.parse
+from typing import Dict, Union
+
 from bs4 import BeautifulSoup
 from w3lib.url import url_query_cleaner
-import urllib.parse, re
+
+from util.network.http import rget
 
 
 def get_bs4(url):
@@ -12,19 +16,65 @@ def get_bs4(url):
     """
     return BeautifulSoup(url, "html.parser")
 
-# porting from old api
-def getfilehost(url, hostname=False):
+def download_webpage(url: str, cf: bool = False, headers: Dict[str, str] = None, *args, **kwargs) -> BeautifulSoup:
     """
-    Unused idk since it's no have perpouse
+    Downloads and parses the HTML of a webpage.
+    
+    Parameters:
+        url (str): The URL of the webpage to download.
+        cf (bool): A flag indicating whether to use the cloudscraper on requests.get() function which can handles Cloudflare protection.
+        headers (Dict[str, str]): A dictionary of HTTP headers to send with the request.
+        *args: Additional positional arguments to pass to the requests.get() or cf() function.
+        **kwargs: Additional keyword arguments to pass to the requests.get() or cf() function.
+        
+    Returns:
+        BeautifulSoup: A BeautifulSoup object containing the parsed HTML of the webpage.
+        
+    Raises:
+        Exception: If the request to the webpage fails.
     """
-    if hostname is True:
-        url = url.strip("/ ")
-        return url.split("/")[2]
+    if cf:
+        response = rget(url, headers=headers, is_cf=True, *args, **kwargs)
     else:
-        url = url.strip("/ ")
-        return url.split("/")[-1]
+        response = rget(url, headers=headers, *args, **kwargs)
 
-def cleanurl(url: str, *args, **kwargs):
+    if response.status_code != 200:
+        raise Exception(f'Request to {url} failed with status code {response.status_code}')
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    return soup
+
+
+# porting from old api
+def getfilehost(url: str, hostname: bool = False) -> str:
+    """
+    Returns the file host or hostname of a URL.
+    
+    Parameters:
+        url (str): The URL to get the file host or hostname from.
+        hostname (bool): A flag indicating whether to return the hostname (True) or file host (False).
+        
+    Returns:
+        str: The file host or hostname of the URL.
+    """
+    if hostname:
+        return url.strip("/ ").split("/")[2]
+    else:
+        return url.strip("/ ").split("/")[-1]
+
+def cleanurl(url: str, *args, **kwargs) -> str:
+    """
+    Cleans a URL by removing query parameters and other unnecessary elements.
+    
+    Parameters:
+        url (str): The URL to clean.
+        *args: Additional positional arguments to pass to the `url_query_cleaner` function.
+        **kwargs: Additional keyword arguments to pass to the `url_query_cleaner` function.
+        
+    Returns:
+        str: The cleaned URL.
+    """
     return url_query_cleaner(url, *args, **kwargs)
 
 def trailing(bs4, *, quotation_mark=False, apostrophe=False, combo=False):
@@ -44,9 +94,7 @@ def trailing(bs4, *, quotation_mark=False, apostrophe=False, combo=False):
         return bs4.replace('"', '')
     if apostrophe:
         return bs4.replace("'", "")
-    if combo:
-        return bs4.replace("'", "").replace('"', ' ')
-    return bs4
+    return bs4.replace("'", "").replace('"', ' ') if combo else bs4
 
 
 def fix_annoy(bs4, double_newline=False, double_space=False, remove_part=None):
@@ -122,10 +170,7 @@ def extract_form_action(self, html):
         str: The value of the action attribute.
     """
     pattern = r'<form.*?action="(.*?)".*?>'
-    match = re.search(pattern, html)
-    if match:
-        return match.group(1)
-    return ""
+    return match.group(1) if (match := re.search(pattern, html)) else ""
     
 def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> Union[str, None]:
     """
@@ -139,14 +184,8 @@ def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> Union[str
     Returns:
         Union[str, None]: The value of the specified attribute of the first element with the specified tag that is found, if present. Returns None if no such element is found or if the attribute is not found.
     """
-    if tag:
-        element = bs4.find(tag)
-    else:
-        element = bs4
-
-    if element:
-        return element.get(attr)
-    return None
+    element = bs4.find(tag) if tag else bs4
+    return element.get(attr) if element else None
 
 
 def get_title(bs4, generic=False, force=False, *args, **kwargs):

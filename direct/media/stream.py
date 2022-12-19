@@ -1,10 +1,13 @@
-import time, re
+import re
+import time
 
-from util.network.cookie import fix_cookie, get_cookie
-from util.network.http import rget, rpost, starter, req, HEADER_DEFAULT
-from util.html.parser import fix_url, get_bs4, get_link_single, trailing
-from util.utils import clean_http, uegen
 from requests.utils import DEFAULT_ACCEPT_ENCODING
+
+from util.html.parser import fix_url, get_bs4, get_link_single, trailing
+from util.network.cookie import fix_cookie, get_cookie
+from util.network.http import HEADER_DEFAULT, req, rget, rpost, starter
+from util.utils import clean_http, uegen
+
 
 def twitter(query):
     starter("https://www.expertsphp.com/twitter-video-downloader.php")
@@ -164,8 +167,7 @@ def pinterest(query):
     }
     response = rpost('https://pinterestvideodownloader.io/wp-admin/admin-ajax.php', headers=headers, data=data, single=True)
     bs1 = get_bs4(response.text)
-    img1 = get_link_single(bs1.select_one('#pvd_preview_img'), "src")
-    return img1
+    return get_link_single(bs1.select_one('#pvd_preview_img'), "src")
 
 
 def snackvideo(query):

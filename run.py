@@ -4,16 +4,18 @@ import time
 
 import PyBypass as direk_1
 from flask import Flask, g, jsonify, redirect, render_template, request
+
+from direct.media.music import soundcloud, spotify
 from direct.media.stream import pinterest, snackvideo, tiktik, twitter
-from direct.media.music import spotify, soundcloud
-from direct.update.uptodown import get_dl as upget_dl
+from direct.rom import coolrom
 from direct.update import apkmirror
 from direct.update.apkpure import get_dl as apk_dl
+from direct.update.uptodown import get_dl as upget_dl
 from util.exceptions import FukUSeragent, GagalDikarenakan
+from util.html.parser import (cleanurl, fix_url, get_bs4, get_link_single,
+                              getfilehost)
 from util.network.http import rget
-from direct.rom import coolrom
 from util.utils import fix_link
-from util.html.parser import cleanurl, fix_url, get_bs4, get_link_single, getfilehost
 
 app = Flask(__name__)
     

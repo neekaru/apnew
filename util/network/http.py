@@ -1,5 +1,6 @@
 import cloudscraper
 import requests
+
 from util.utils import uegen
 
 req = requests.session()
@@ -28,7 +29,7 @@ def cf():
         'Sec-Fetch-Mode': 'navigate',
     })
     return reqcq
-    
+
 def starter(url, *, is_cf=False, single=False):
     """
     Makes a request to a website and disguises it as a visit by a real user.

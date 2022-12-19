@@ -1,9 +1,9 @@
 # so this common for my next feature for something like check my update bla bla           
-from util.network.http import rget
 from util.html.parser import get_bs4, get_link_single
+from util.network.http import rget
 
 
-def check(url):
+def check(url):  # sourcery skip: inline-immediately-returned-variable
     """This need for checking latest one update
 
     Args:

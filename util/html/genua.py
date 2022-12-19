@@ -5,6 +5,7 @@
 
 import random
 
+
 def GetRandomUserAgent():
     browserType = ["firefox", "chrome", "opera", "edge"]
     OS = ["Windows NT 10.0; Win64; x64", "X11; Linux x86_64", "Macintosh; Intel Mac OS X 12_5"]

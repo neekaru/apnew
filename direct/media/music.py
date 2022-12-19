@@ -1,9 +1,13 @@
-import re, json, time
+import json
+import re
+import time
 
 from requests.utils import DEFAULT_ACCEPT_ENCODING
-from util.utils import uegen
-from util.network.http import rget, starter, rpost
+
 from util.html.parser import cleanurl, get_bs4
+from util.network.http import rget, rpost, starter
+from util.utils import uegen
+
 
 class spotify:
     def __init__(self):

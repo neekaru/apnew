@@ -1,6 +1,13 @@
-from .html.genua import GenerateMobileUseragent, GetRandomUserAgent
-import requests, re, hashlib, base64, string
+import base64
+import hashlib
+import re
+import string
+
+import requests
 from fake_useragent import UserAgent
+
+from .html.genua import GenerateMobileUseragent, GetRandomUserAgent
+
 
 def fix_link(url):
     """
