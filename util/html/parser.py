@@ -1,11 +1,11 @@
 import re
 import urllib.parse
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 from bs4 import BeautifulSoup
 from w3lib.url import url_query_cleaner
 
-from util.network.http import rget
+from util.network.http import rget, rpost
 
 
 def get_bs4(url):
@@ -16,13 +16,56 @@ def get_bs4(url):
     """
     return BeautifulSoup(url, "html.parser")
 
-def download_webpage(url: str, cf: bool = False, headers: Dict[str, str] = None, *args, **kwargs) -> BeautifulSoup:
+def download_webpage_with_post(url: str, cf: bool = False, single: bool = False, parse_as: str = "html", headers: Dict[str, str] = None, data: Dict[str, Any] = None, *args, **kwargs) -> Union[BeautifulSoup, str, Dict[str, Any]]:
+    # sourcery skip: raise-specific-error
+    """
+    Downloads and optionally parses the response of a webpage using a POST request.
+    
+    Parameters:
+        url (str): The URL of the webpage to download.
+        cf (bool): A flag indicating whether to use the cloudscraper on requests.post() function which can handles Cloudflare protection.
+        single (bool): A flag if you want use single requests not session
+        parse_as (str): A string indicating how to parse the response. Can be "html", "text", or "json".
+        headers (Dict[str, str]): A dictionary of HTTP headers to send with the request.
+        data (Dict[str, Any]): A dictionary of data to send in the body of the request.
+        *args: Additional positional arguments to pass to the requests.post() or cf() function.
+        **kwargs: Additional keyword arguments to pass to the requests.post() or cf() function.
+        
+    Returns:
+        BeautifulSoup, str, or Dict[str, Any]: A BeautifulSoup object containing the parsed HTML of the webpage, the raw response text as a string, or the response JSON data as a dictionary, depending on the value of `parse_as`.
+        
+    Raises:
+        Exception: If the request to the webpage fails.
+    """
+    if cf:
+        response = rpost(url, headers=headers, is_cf=True, data=data, *args, **kwargs)
+    elif single:
+        response = rpost(url, headers=headers, single=True, data=data, *args, **kwargs)
+    else:
+        response = rpost(url, headers=headers, data=data, *args, **kwargs)
+
+    if response.status_code != 200:
+        raise Exception(f'Request to {url} failed with status code {response.status_code}')
+
+    if parse_as == "html":
+        return BeautifulSoup(response.text, 'html.parser')
+    elif parse_as == "json":
+        return response.json()
+    elif parse_as == "text":
+        return response.text
+
+
+
+def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as: str = "html", headers: Dict[str, str] = None, *args, **kwargs) -> Union[BeautifulSoup, str]:
+    # sourcery skip: raise-specific-error
     """
     Downloads and parses the HTML of a webpage.
     
     Parameters:
         url (str): The URL of the webpage to download.
         cf (bool): A flag indicating whether to use the cloudscraper on requests.get() function which can handles Cloudflare protection.
+        single (bool): A flag if you want use single requests not session
+        parse_as (str): A string indicating how to parse the response. Can be "html", "text", or "json".
         headers (Dict[str, str]): A dictionary of HTTP headers to send with the request.
         *args: Additional positional arguments to pass to the requests.get() or cf() function.
         **kwargs: Additional keyword arguments to pass to the requests.get() or cf() function.
@@ -35,15 +78,20 @@ def download_webpage(url: str, cf: bool = False, headers: Dict[str, str] = None,
     """
     if cf:
         response = rget(url, headers=headers, is_cf=True, *args, **kwargs)
+    elif single:
+        response = rget(url, headers=headers, single=True, *args, **kwargs)
     else:
         response = rget(url, headers=headers, *args, **kwargs)
 
     if response.status_code != 200:
         raise Exception(f'Request to {url} failed with status code {response.status_code}')
 
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    return soup
+    if parse_as == "html":
+        return BeautifulSoup(response.text, 'html.parser')
+    elif parse_as == "json":
+        return response.json()
+    elif parse_as == "text":
+        return response.text
 
 
 # porting from old api
