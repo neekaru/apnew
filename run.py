@@ -1,12 +1,13 @@
 import os
 import signal
 import time
+import re
 
 import PyBypass as direk_1
 from flask import Flask, g, jsonify, redirect, render_template, request
 
 from direct.media.music import soundcloud, spotify
-from direct.media.stream import pinterest, snackvideo, tiktik, twitter
+from direct.media.stream import fb, pinterest, snackvideo, tiktik, twitter
 from direct.rom import coolrom
 from direct.update import apkmirror
 from direct.update.apkpure import get_dl as apk_dl
@@ -98,43 +99,51 @@ def amazon():
     except Exception as e:
         return {"Status": False, "msg": e}
 
+
+def get_domain(url):
+    """Extract the domain from a URL."""
+    import re
+    return match.group(1) if (match := re.search(r"https?://([^/]+)/?", url)) else None
+
 @app.route("/stream", methods=["GET"])
 def mediaStream():
+    stream_handlers = {
+        "pinterest.com": pinterest,
+        "pin.it": pinterest,
+        "twitter.com": twitter,
+        "fb.watch": fb,
+        "facebook.com": fb,
+        "vm.tiktok.com": tiktik,
+        "sck.io": snackvideo,
+        "snackvideo.com": snackvideo,
+    }
+
     if not request.args.get("url"):
         return {"msg": "Masukan Url Anda"}
     query = request.args.get("url")
+    domain = get_domain(query)
     try:
-        if "pinterest.com" in query or "pin.it" in query:
-            if "pin.it" in query:
-                queri = fix_link(query) # because the web cannot handle pin.it
-                pin = pinterest(queri)
-            else:
-                pin = pinterest(query)
-            try:
-                return {"success": True, "result": pin}
-            except (GagalDikarenakan, FukUSeragent) as e:
-                return {"msg": f"keep silent {e}"}
-        if "twitter.com" in query:
-            try:
-                return twitter(query)
-            except Exception as e:
-                return {"msg": f"keep silet {e}"}
-        if "vm.tiktok.com" in query:
-            b = tiktik(query)
-            try:
-                mp3 = b["data"]["mp3"]
-                mp4 = b["data"]["mp4"]
-                thumb = b["data"]["video_img"]
-                capt = b["data"]["video_info"]
-                username = b["data"]["nick"]
-                return {"Status": True, "username": username, "caption": capt, "thumb_link": thumb, "video": mp4, "audio": mp3}
-            except Exception as e:
-                return {"msg": e}
-        if "sck.io" in query or "snackvideo.com" in query:
-            try:
-                return snackvideo(query)
-            except Exception as e:
-                return e
+        stream_handler = stream_handlers[domain]
+        if domain == "pin.it":
+            queri = fix_link(query)
+            result = stream_handler(queri)
+        elif domain == "vm.tiktok.com":
+            # extract the necessary fields from the result of the tiktik function
+            b = stream_handler(queri)
+            mp3 = b["data"]["mp3"]
+            mp4 = b["data"]["mp4"]
+            thumb = b["data"]["video_img"]
+            capt = b["data"]["video_info"]
+            username = b["data"]["nick"]
+            # return the extracted fields as a dictionary
+            return {"Status": True, "username": username, "caption": capt, "thumb_link": thumb, "video": mp4, "audio": mp3}
+        else:
+            result = stream_handler(query)
+        return {"success": True, "result": result}
+    except KeyError:
+        return {"msg": f"Unsupported domain: {domain}"}
+    except (GagalDikarenakan, FukUSeragent) as e:
+        return {"msg": f"keep silent {e}"}
     except Exception as e:
         return e
 

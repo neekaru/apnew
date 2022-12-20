@@ -3,11 +3,40 @@ import time
 
 from requests.utils import DEFAULT_ACCEPT_ENCODING
 
-from util.html.parser import fix_url, get_bs4, get_link_single, trailing
+from util.html.parser import fix_annoy, fix_url, get_bs4, get_link_single, trailing, download_webpage, download_webpage_with_post
 from util.network.cookie import fix_cookie, get_cookie
-from util.network.http import HEADER_DEFAULT, req, rget, rpost, starter
+from util.network.http import HEADER_DEFAULT, req, rget, starter
 from util.utils import clean_http, uegen
 
+
+def fb(url):
+    starter("https://fdown.net", single=True)
+    headers = {
+        'User-Agent': uegen(default=True),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': DEFAULT_ACCEPT_ENCODING,
+        'Origin': 'https://fdown.net',
+        'Connection': 'keep-alive',
+        'Referer': 'https://fdown.net/',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-User': '?1',
+    }
+
+    data = {
+        'URLz': url,
+    }
+    bs4 = download_webpage_with_post('https://fdown.net/download.php', headers=headers, data=data)
+    sd = get_link_single(bs4.select_one("#sdlink"), "href")
+    hd = get_link_single(bs4.select_one("#hdlink"), "href")
+    image_url = get_link_single(bs4.select_one(".lib-img-show"), "src")
+    title = fix_annoy(bs4.select_one("div.lib-row:nth-child(1)").get_text(), double_newline=True)
+    des = fix_annoy(bs4.select_one("div.lib-row:nth-child(2)").get_text(), double_newline=True, remove_part="Description: ")
+    waktu = fix_annoy(bs4.select_one("div.lib-row:nth-child(3)").get_text(), double_newline=True, remove_part="Duration: ")
+    return {"Status": True, "data": [{"title": title, "description": des, "waktu": waktu, "video_sd": sd, "video_hd": hd, "image_url": image_url}]}
 
 def twitter(query):
     starter("https://www.expertsphp.com/twitter-video-downloader.php")
@@ -25,7 +54,7 @@ def twitter(query):
     data = {
         "url": query
     }
-    d = get_bs4(rpost("https://www.expertsphp.com/instagram-reels-downloader.php", headers=headers, data=data).text)
+    d = download_webpage_with_post("https://www.expertsphp.com/instagram-reels-downloader.php", headers=headers, data=data)
     caption = clean_http(d.find("p", {"class": "text-center"}).get_text(), newline=True).strip().replace('\u3000', ' ')
     link = d.select_one("#showdata > div.col-md-4.col-md-offset-4 > a.btn.btn-primary.btn-sm.btn-block").get("href")
     return {"Status": True, "tweets": caption, "link": link}
@@ -92,7 +121,7 @@ def instagram(query):
         "x-requested-with": "XMLHttpRequest",
         "Accept-Encoding": DEFAULT_ACCEPT_ENCODING
     }
-    data = rpost("https://saveig.app/api/ajaxSearch", data=data, headers=headers, single=True).json()["data"]
+    data = download_webpage_with_post("https://saveig.app/api/ajaxSearch", data=data, headers=headers, single=True, parse_as="json")["data"]
     bs4 = get_bs4(data)
     thumb = bs4.find("img", {"alt": "saveig"}).get("src")
     link = get_link_single(bs4.find("div", {"class":"download-items__btn"}), "href", "a")
@@ -111,7 +140,7 @@ def tiktik(query):
         "referer": "https://www.google.com/"
         
     }
-    rget(base_url, headers=headers_base, cookies=cookiess)
+    download_webpage(base_url, headers=headers_base, cookies=cookiess)
     # to fool the system
     headers_fool = {
         "User-Agent": uegen(default=True, mobile=True),
@@ -121,7 +150,7 @@ def tiktik(query):
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "referer": "https://downloader.bot/id"
     }
-    rget("https://downloader.bot/api/stats/usersdownloaded", headers=headers_fool, cookies=cookiess)
+    download_webpage("https://downloader.bot/api/stats/usersdownloaded", headers=headers_fool, cookies=cookiess)
     headers_bot = {
         "User-Agent": uegen(default=True, mobile=True),
         "accept-Encoding": DEFAULT_ACCEPT_ENCODING,
@@ -135,7 +164,7 @@ def tiktik(query):
     json_req = {
         "url": query
     }
-    return rpost("https://downloader.bot/api/tiktok/info", headers=headers_bot, json=json_req, cookies=cookiess).json()
+    return download_webpage_with_post("https://downloader.bot/api/tiktok/info", headers=headers_bot, json=json_req, cookies=cookiess, parse_as="json")
     
 def pinterest(query):
     """
@@ -165,9 +194,8 @@ def pinterest(query):
         'requestlink': 'https://pinterestvideodownloader.io/',
         'deftab': 'video',
     }
-    response = rpost('https://pinterestvideodownloader.io/wp-admin/admin-ajax.php', headers=headers, data=data, single=True)
-    bs1 = get_bs4(response.text)
-    return get_link_single(bs1.select_one('#pvd_preview_img'), "src")
+    response = download_webpage_with_post('https://pinterestvideodownloader.io/wp-admin/admin-ajax.php', headers=headers, data=data, single=True)
+    return get_link_single(response.select_one('#pvd_preview_img'), "src")
 
 
 def snackvideo(query):

@@ -1,6 +1,7 @@
+import codecs
 import re
 import urllib.parse
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Optional
 
 from bs4 import BeautifulSoup
 from w3lib.url import url_query_cleaner
@@ -25,7 +26,7 @@ def download_webpage_with_post(url: str, cf: bool = False, single: bool = False,
         url (str): The URL of the webpage to download.
         cf (bool): A flag indicating whether to use the cloudscraper on requests.post() function which can handles Cloudflare protection.
         single (bool): A flag if you want use single requests not session
-        parse_as (str): A string indicating how to parse the response. Can be "html", "text", or "json".
+        parse_as (str): A string indicating how to parse the response. Can be "html", "text", "Nothing" or "json".
         headers (Dict[str, str]): A dictionary of HTTP headers to send with the request.
         data (Dict[str, Any]): A dictionary of data to send in the body of the request.
         *args: Additional positional arguments to pass to the requests.post() or cf() function.
@@ -53,6 +54,8 @@ def download_webpage_with_post(url: str, cf: bool = False, single: bool = False,
         return response.json()
     elif parse_as == "text":
         return response.text
+    elif parse_as == "Nothing":
+        return response
 
 
 
@@ -65,7 +68,7 @@ def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as:
         url (str): The URL of the webpage to download.
         cf (bool): A flag indicating whether to use the cloudscraper on requests.get() function which can handles Cloudflare protection.
         single (bool): A flag if you want use single requests not session
-        parse_as (str): A string indicating how to parse the response. Can be "html", "text", or "json".
+        parse_as (str): A string indicating how to parse the response. Can be "html", "text", "Nothing" or "json".
         headers (Dict[str, str]): A dictionary of HTTP headers to send with the request.
         *args: Additional positional arguments to pass to the requests.get() or cf() function.
         **kwargs: Additional keyword arguments to pass to the requests.get() or cf() function.
@@ -92,6 +95,8 @@ def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as:
         return response.json()
     elif parse_as == "text":
         return response.text
+    elif parse_as == "Nothing":
+        return response
 
 
 # porting from old api
@@ -145,14 +150,25 @@ def trailing(bs4, *, quotation_mark=False, apostrophe=False, combo=False):
     return bs4.replace("'", "").replace('"', ' ') if combo else bs4
 
 
-def fix_annoy(bs4, double_newline=False, double_space=False, remove_part=None):
-    """This function is intended for fixing some annoying parts of a string.
+
+def fix_annoy(bs4: str, double_newline: bool = False, double_space: bool = False, remove_part: Optional[str] = None,
+              unicode_escape: Optional[bool] = None, weird_unicode_remover: Optional[bool] = None) -> str:
+    """Fix annoying parts of a string.
+
+    This function is intended for fixing some annoying parts of a string, such as double newlines, double spaces, and
+    specified substrings.
 
     Args:
-        bs4 (str): The input string.
-        double_newline (bool, optional): Fix double newline "a\ text \ b". Defaults to False.
-        double_space (bool, optional): Fix double space like this "  a ". Defaults to False.
-        remove_part (str, optional): A substring to remove from the input using a regular expression pattern. Defaults to None.
+        bs4 (str): The input string to be modified.
+        double_newline (bool, optional): If True, fix double newlines in the input string (e.g. "a\n\n text \n b").
+                                         Defaults to False.
+        double_space (bool, optional): If True, fix double spaces in the input string (e.g. "  a "). Defaults to False.
+        remove_part (str, optional): A substring to remove from the input using a regular expression pattern.
+                                     Defaults to None.
+        unicode_escape (bool, optional): If True, decode the input string using the "unicode_escape" codec.
+                                         Defaults to None.
+        weird_unicode_remover (bool, optional): If True, remove non-ASCII characters from the input string.
+                                                 Defaults to None.
 
     Returns:
         str: The modified input string.
@@ -164,6 +180,10 @@ def fix_annoy(bs4, double_newline=False, double_space=False, remove_part=None):
     if remove_part is not None:
         bs4 = re.sub(remove_part, "", bs4)
         bs4 = bs4.lstrip()
+    if unicode_escape is not None:
+        return codecs.decode(bs4, "unicode_escape")
+    if weird_unicode_remover is not None:
+        return re.sub(r'[^\x00-\x7F]', '', bs4)
     return bs4
 
 def fix_url(url: str, *, clean=False, quote_plus=False, quote=False, quote_fix=False, unquote=False):
