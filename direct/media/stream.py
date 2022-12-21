@@ -1,13 +1,61 @@
 import re
 import time
+import json
 
 from requests.utils import DEFAULT_ACCEPT_ENCODING
 
 from util.html.parser import fix_annoy, fix_url, get_bs4, get_link_single, trailing, download_webpage, download_webpage_with_post
 from util.network.cookie import fix_cookie, get_cookie
 from util.network.http import HEADER_DEFAULT, req, rget, starter
-from util.utils import clean_http, uegen
+from util.utils import clean_http, uegen, get_readable_size, get_readable_time
 
+class helo:
+    def __init__(self):
+        self.__headers = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.6',
+            'Cache-Control': 'max-age=0',
+            "User-Agent": uegen(default=True),
+            'Connection': 'keep-alive',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            "Upgrade-Insecure-Requests": "1"
+        } 
+    
+    def parser_json_from_element(self, element):
+        # Extract the JSON object from the script element
+        json_string = element.string  # Get the contents of the Tag object as a string
+        json_string = json_string.replace('<script>window.__INITIAL_STATE__=', '').replace('window.__INITIAL_STATE__=', '')
+        json_string = fix_annoy(json_string, double_newline=True).replace("   ", "").replace("       ", "").replace("       ", "").replace("undefined", '""')
+        return json.loads(json_string)
+
+
+    def result(self, url):
+        d = download_webpage(url, headers=self.__headers, parse_as="html")
+        p = d.find_all("script")[5]
+        # this need to extract them
+        d = self.parser_json_from_element(p)
+        base_video = d["ArticleDetailInfo"]["share_download_video"]["cdn_url"]
+        url_list = d["ArticleDetailInfo"]["video"]["url_list"]
+        wm_list = d["ArticleDetailInfo"]["share_download_video"]["url_list"]
+        data = []
+        data1 = []
+        for url_obj in url_list:
+            text = url_obj["text"]
+            size = url_obj["size"]
+            expired = url_obj["url_expire"]
+            urls = url_obj["urls"][0]
+            data.append({"text": text, "size": get_readable_size(size), "urls": urls, "expired": get_readable_time(expired, unix_epoch=True)})
+        for url_wm in wm_list:
+            text = url_wm["text"]
+            size = url_wm["size"]
+            expired = url_wm["url_expire"]
+            urls = url_wm["urls"][0]
+            data1.append({"text": text, "size": get_readable_size(size), "urls": urls, "expired": get_readable_time(expired, unix_epoch=True)})
+        result = {"Status": True, "data": [{"base_video": base_video, "no_wm": data, "wm_data": data1}]}
+        return result
 
 def fb(url):
     starter("https://fdown.net", single=True)

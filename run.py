@@ -7,7 +7,7 @@ import PyBypass as direk_1
 from flask import Flask, g, jsonify, redirect, render_template, request
 
 from direct.media.music import soundcloud, spotify
-from direct.media.stream import fb, pinterest, snackvideo, tiktik, twitter
+from direct.media.stream import fb, pinterest, snackvideo, tiktik, twitter, helo
 from direct.rom import coolrom
 from direct.update import apkmirror
 from direct.update.apkpure import get_dl as apk_dl
@@ -107,6 +107,7 @@ def get_domain(url):
 
 @app.route("/stream", methods=["GET"])
 def mediaStream():
+    heloo = helo().result
     stream_handlers = {
         "pinterest.com": pinterest,
         "pin.it": pinterest,
@@ -116,6 +117,7 @@ def mediaStream():
         "vm.tiktok.com": tiktik,
         "sck.io": snackvideo,
         "snackvideo.com": snackvideo,
+        "s.helo-app.com": heloo
     }
 
     if not request.args.get("url"):

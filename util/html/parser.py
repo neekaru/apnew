@@ -1,9 +1,11 @@
 import codecs
 import re
 import urllib.parse
-from typing import Any, Dict, Union, Optional
+from typing import Any, Dict, List, Union, Optional
 
 from bs4 import BeautifulSoup
+from bs4.element import Tag
+from lxml import etree
 from w3lib.url import url_query_cleaner
 
 from util.network.http import rget, rpost
@@ -149,6 +151,43 @@ def trailing(bs4, *, quotation_mark=False, apostrophe=False, combo=False):
         return bs4.replace("'", "")
     return bs4.replace("'", "").replace('"', ' ') if combo else bs4
 
+def find_element_by_css_selector(html: str, selector: str, method: str = 'css', single: bool = False, parse_html: bool = True) -> Union[List[Tag], Tag]:
+    # sourcery skip: assign-if-exp, switch
+    """
+    Find that needle in the haystack! This function helps you locate an HTML element (or elements) within an HTML document using a CSS selector or XPath expression. 
+
+    Args:
+    - html (str): The HTML document as a string. Think of it as the haystack where you'll be searching for the needle (the element).
+    - selector (str): The CSS selector or XPath expression to use for element selection. This is the needle that will help you find the element(s) you're looking for.
+    - method (str, optional): The method to use for element selection. Can be either "css" or "xpath". Defaults to "css".
+    - single (bool, optional): Whether to return a single element or a list of elements. Defaults to False (return a list).
+    - parse_html (bool, optional): Whether to parse the HTML document using Beautiful Soup. Defaults to True.
+
+    Returns:
+    - Union[List[Tag], Tag]: A list of Beautiful Soup Tag objects if single is False, or a single Tag object if single is True.
+    """
+
+    # Parse the HTML document
+    if parse_html:
+        soup = BeautifulSoup(html, 'html.parser')
+    root = etree.fromstring(html)
+
+    # Find the element(s) using the specified method
+    if method == 'css':
+        if single:
+            elements = soup.select_one(selector)
+        else:
+            elements = soup.select(selector)
+    elif method == 'xpath':
+        if single:
+            elements = root.xpath(selector)
+        else:
+            elements = root.xpath(f'/{selector}')
+    else:
+        raise ValueError('Invalid method. Choose "css" or "xpath".')
+
+    # Return the element(s)
+    return elements
 
 
 def fix_annoy(bs4: str, double_newline: bool = False, double_space: bool = False, remove_part: Optional[str] = None,
