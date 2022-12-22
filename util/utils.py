@@ -1,7 +1,7 @@
 import base64
 import contextlib
 import datetime
-import re
+import re, string
 from typing import List, Optional, Union
 
 import requests
@@ -88,51 +88,59 @@ def csrfget(bs4, *, middleware: Optional[bool]=False, csrf: Optional[bool]=False
     if csrf:
         return None
 
-def get_readable_time(seconds: int, unix_epoch: bool = False, utc: bool = False) -> str:
+def get_readable_time(seconds: Union[int, float], unix_epoch: bool = False, utc: bool = False) -> str:
     """
-    Return a human-readable time format
-    
+    Return a human-readable time format in the format %dd %hh %mm %ss.
+
     Args:
-        seconds (int): The number of seconds to convert to a human-readable format.
-        unix_epoch (bool, optional): If set to True, the given seconds value will be converted to the equivalent
-                                     time based on the Unix epoch (default is False).
+        seconds (Union[int, float]): The number of seconds to convert to a human-readable format. The value can be an
+                                    integer or a float.
+        unix_epoch (bool, optional): If set to True, the given seconds value will be interpreted as a Unix timestamp and
+                                     converted to the equivalent time based on the Unix epoch (default is False).
         utc (bool, optional): If set to True, the calculated time will be converted to the equivalent time in the
                               Coordinated Universal Time (UTC) time zone (default is False).
-    
+
     Returns:
         str: The human-readable time format.
     """
-
     if unix_epoch:
         # If the unix_epoch argument is set to True, we need to convert the given seconds value to the equivalent
         # time based on the Unix epoch.
         time = datetime.datetime.fromtimestamp(seconds)
     else:
-        # If the unix_epoch argument is not set, we can simply use the given seconds value to create a timedelta
-        # object.
-        time = datetime.timedelta(seconds=seconds)
+        # If the unix_epoch argument is not set, we can use the given seconds value to create a datetime object
+        # representing the current date and time, and then subtract or add the number of seconds from/to it to get the
+        # desired time.
+        if seconds < 0:
+            # If the seconds value is negative, subtract the number of seconds from the current date and time.
+            time = datetime.datetime.now() - datetime.timedelta(seconds=abs(seconds))
+        else:
+            # If the seconds value is positive, add the number of seconds to the current date and time.
+            time = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
 
     if utc:
         # If the utc argument is set to True, we need to convert the calculated time to the equivalent time in the
         # Coordinated Universal Time (UTC) time zone.
         time = time - datetime.timedelta(hours=time.hour)
 
-    # Extract the number of days, hours, minutes and seconds from the calculated time and format them into a
+    # Calculate the number of days by dividing the total number of seconds by the number of seconds in a day.
+    day = abs(seconds) // 86400
+
+    # Extract the number of hours, minutes and seconds from the calculated time and format them into a
     # human-readable string.
-    days = time.day
-    hours = time.second // 3600
-    minutes = (time.second // 60) % 60
-    seconds = time.second % 60
+    hour = (abs(seconds) // 3600) % 24
+    minute = (abs(seconds) // 60) % 60
+    second = abs(seconds) % 60
 
     result = ""
-    if days != 0:
-        result += f"{days}d "
-    if hours != 0:
-        result += f"{hours}h "
-    if minutes != 0:
-        result += f"{minutes}m "
-    if seconds != 0:
-        result += f"{seconds}s"
+    if day != 0:
+        result += f"{day}d "
+    if hour != 0:
+        result += f"{hour}h "
+    if minute != 0:
+        result += f"{minute}m "
+    if second != 0:
+        result += f"{second}s"
 
     return result
 

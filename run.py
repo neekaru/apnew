@@ -3,35 +3,41 @@ import signal
 import time
 import re
 
-import PyBypass as direk_1
-from flask import Flask, g, jsonify, redirect, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request
 
 from direct.media.music import soundcloud, spotify
+from direct.direk import direct_link
 from direct.media.stream import fb, pinterest, snackvideo, tiktik, twitter, helo
 from direct.rom import coolrom
-from direct.update import apkmirror
+from direct.update.apkmirror import grab, home
 from direct.update.apkpure import get_dl as apk_dl
 from direct.update.uptodown import get_dl as upget_dl
 from util.exceptions import FukUSeragent, GagalDikarenakan
-from util.html.parser import (cleanurl, fix_url, get_bs4, get_link_single,
-                              getfilehost)
-from util.network.http import rget
+from util.html.parser import (
+    cleanurl,
+    get_link_single,
+    getfilehost,
+    download_webpage,
+)
 from util.utils import fix_link
 
 app = Flask(__name__)
-    
+
+
 @app.route("/")
 def index():
     time.sleep(10)
     return render_template("index.html")
 
+
 # needed since i manage some update on nvim
-@app.route("/shutdown", methods=['GET'])
+@app.route("/shutdown", methods=["GET"])
 def shutdown():
     jsonify({"Status": True, "message": "Shutting down..."})
     time.sleep(10)
     sig = getattr(signal, "SIGKILL", signal.SIGTERM)
     os.kill(os.getpid(), sig)
+
 
 # as template
 @app.route("/test", methods=["GET"])
@@ -43,6 +49,7 @@ def test():
     query = request.args.get("url")
     return
 
+
 @app.route("/berita", methods=["GET"])
 def berita():
     news = request.args.get("sumber", type=str, default="")
@@ -50,7 +57,8 @@ def berita():
         return {"msg": "masukan website berita"}
     page = request.args.get("page", type=int, default="")
     return page
-    
+
+
 @app.route("/song/<path:path1>", methods=["GET"])
 def song(path1):
     if "spotify" in path1:
@@ -58,6 +66,7 @@ def song(path1):
             return spotify().main(song)
         else:
             return {"Status": False, "msg": "No song specified"}
+
 
 @app.route("/update", methods=["GET"])
 def up():
@@ -71,13 +80,13 @@ def up():
         elif query == "apkpure":
             return apk_dl(query)
         elif query == "apkmirror":
-            return apkmirror.home(query) or apkmirror.grab(query) or "nothing"
+            return home(query) or grab(query) or "nothing"
         else:
             raise ValueError("Invalid query")
     except Exception as e:
         return {"msg": f"aplikasi tidak tersedia {e}"}
 
-        
+
 @app.route("/ammusic", methods=["GET"])
 def amazon():
     if not request.args.get("url"):
@@ -85,18 +94,25 @@ def amazon():
     query = request.args.get("url")
     try:
         if "amazon" in query:
-            c1 = cleanurl(query, ['marketplaceId', 'musicTerritory', 'ref'], remove=True).replace("/music/player", '').replace('amazon', 'music.amazon')
+            c1 = (
+                cleanurl(query, ["marketplaceId", "musicTerritory", "ref"], remove=True)
+                .replace("/music/player", "")
+                .replace("amazon", "music.amazon")
+            )
             return {"Status": True, "result": c1}
         elif "music.amazon" in query:
-            c1 = cleanurl(query, ['marketplaceId', 'musicTerritory', 'ref'], remove=True)
+            c1 = cleanurl(
+                query, ["marketplaceId", "musicTerritory", "ref"], remove=True
+            )
             return {"Status": True, "result": c1}
     except Exception as e:
-        return {"Status": False, "msg": e} 
+        return {"Status": False, "msg": e}
 
 
 def get_domain(url):
     """Extract the domain from a URL."""
     return match.group(1) if (match := re.search(r"https?://([^/]+)/?", url)) else None
+
 
 @app.route("/stream", methods=["GET"])
 def mediaStream():
@@ -110,7 +126,7 @@ def mediaStream():
         "vm.tiktok.com": tiktik,
         "sck.io": snackvideo,
         "snackvideo.com": snackvideo,
-        "s.helo-app.com": heloo
+        "s.helo-app.com": heloo,
     }
 
     if not request.args.get("url"):
@@ -131,7 +147,14 @@ def mediaStream():
             capt = b["data"]["video_info"]
             username = b["data"]["nick"]
             # return the extracted fields as a dictionary
-            return {"Status": True, "username": username, "caption": capt, "thumb_link": thumb, "video": mp4, "audio": mp3}
+            return {
+                "Status": True,
+                "username": username,
+                "caption": capt,
+                "thumb_link": thumb,
+                "video": mp4,
+                "audio": mp3,
+            }
         else:
             result = stream_handler(query)
         return {"success": True, "result": result}
@@ -142,50 +165,74 @@ def mediaStream():
     except Exception as e:
         return e
 
+
 @app.route("/direct", methods=["GET"])
 def direct():
     if not request.args.get("url"):
         return {"msg": "Masukan Url Anda"}
     query = request.args.get("url")
+    d2 = direct_link(query)
     try:
-        d1 = direk_1.bypass(query)
-        if "bypassed_url" in d1:
-            return {"Status": True, "dl_url": fix_url(d1["bypassed_url"], quote_fix=True)}
-        else:
-            return {"Status": True, "dl_url": d1}
-    except Exception as e:
-        return {"Status": False, "msg": e}
+        return {"Status": True, "dl_url": d2}
+    except Exception:
+        return d2
 
 
-# for testing function works
 @app.route("/rom", methods=["GET"])
-def rom():  # sourcery skip: remove-redundant-if
+def rom():
     if not request.args.get("url"):
         return
+
     query = request.args.get("url")
     try:
         if "coolrom.com.au" in query:
-            # to fix another issue url
             return coolrom(query)
         elif "romsfun.com" in query:
             return
-        elif "romhustler.org" or "romulation.org" in query:
+
+        # Check if the query is from romhustler.org or romulation.org
+        if "romhustler.org" in query or "romulation.org" in query:
             links = []
-            bs4 = get_bs4(rget(query).text)
+            bs4 = download_webpage((query), parse_as="html")
             # to get guest token
             base = bs4.find("a", {"class": "btn btn-yellow"})
             first_link = get_link_single(base, "href")
-            data = get_bs4(rget(f"https://{getfilehost(query, hostname=True)}{first_link}").text)
+            data = download_webpage(
+                f"https://{getfilehost(query, hostname=True)}{first_link}",
+                parse_as="html",
+            )
             # this need for data
             try:
-                warning = [ver.get_text() for ver in data.select("#section > div > section:nth-child(2) > div.alert.alert-danger > ul > li")][0]
+                warning = [
+                    ver.get_text()
+                    for ver in data.select(
+                        "#section > div > section:nth-child(2) > div.alert.alert-danger > ul > li"
+                    )
+                ][0]
                 if warning is not None:
                     return {"msg": f"file error because {warning}"}
             except IndexError:
                 # for get all url
-                title = data.find("table", {"class": "details-table"}).find("td").find_next("td").get_text()
-                filesize = data.find("table", {"class": "details-table"}).find("td").find_next("td").find_next("td").find_next("td").get_text()
-                links.extend(link["href"] for link in data.find("div", {"class": "details-container"}).find_all(href=True))
+                title = (
+                    data.find("table", {"class": "details-table"})
+                    .find("td")
+                    .find_next("td")
+                    .get_text()
+                )
+                filesize = (
+                    data.find("table", {"class": "details-table"})
+                    .find("td")
+                    .find_next("td")
+                    .find_next("td")
+                    .find_next("td")
+                    .get_text()
+                )
+                links.extend(
+                    link["href"]
+                    for link in data.find(
+                        "div", {"class": "details-container"}
+                    ).find_all(href=True)
+                )
                 return {"dl_url": links.pop(0), "title": title, "filesize": filesize}
     except Exception as e:
-        return {"Status": False, "msg": e}
+        return {"status": False, "msg": str(e)}
