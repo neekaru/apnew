@@ -1,8 +1,10 @@
 from util.html.parser import fix_url
+from typing import Dict, Any
 
 
 #  still in beta since i want grab some cookie
-def get_cookie(cookie, *, debug=False, two=False, match=None, match1=None):
+
+def get_cookie(cookie, *, debug: bool = False, two: bool = False, match: int = None, match1: int = None) -> Dict[str, Any]:
     """
     Extracts the Set-Cookie value from the headers of a request.
 
@@ -14,7 +16,7 @@ def get_cookie(cookie, *, debug=False, two=False, match=None, match1=None):
         match1 (int, optional): The index of the second Set-Cookie value to extract. Defaults to None.
 
     Returns:
-        dict: A dictionary of Set-Cookie values.
+        Dict[str, Any]: A dictionary of Set-Cookie values.
     """
     if two:
         pas1 = cookie.headers['Set-Cookie'].split(" ")[match]
@@ -27,8 +29,7 @@ def get_cookie(cookie, *, debug=False, two=False, match=None, match1=None):
     return pas
 
 
-
-def fix_cookie(cookie, *, default=False, quote=False, unquote=False):
+def fix_cookie(cookie, *, default: bool = False, quote: bool = False, unquote: bool = False) -> Any:
     """
     Fixes a cookie by cleaning, quoting, or unquoting it.
 
@@ -39,7 +40,7 @@ def fix_cookie(cookie, *, default=False, quote=False, unquote=False):
         unquote (bool, optional): Unquotes the cookie using the unquote function. Defaults to False.
 
     Returns:
-        any: The fixed cookie.
+        Any: The fixed cookie.
     """
     if default:
         return cookie.split(';')[0]

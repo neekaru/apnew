@@ -49,40 +49,34 @@ def berita():
     if not news:
         return {"msg": "masukan website berita"}
     page = request.args.get("page", type=int, default="")
-    return
+    return page
     
 @app.route("/song/<path:path1>", methods=["GET"])
 def song(path1):
     if "spotify" in path1:
-        try:
-            song = request.args.get("song")
+        if song := request.args.get("song"):
             return spotify().main(song)
-        except:
-            return {"Status": False, "msg": "kamu nanya"}
+        else:
+            return {"Status": False, "msg": "No song specified"}
 
 @app.route("/update", methods=["GET"])
 def up():
-    if not request.args.get("apps"):
-        return {"msg": "Masukan nama aplikasi"}
     query = request.args.get("apps")
-    # apk = request.args.get("apk")
+    if not query:
+        return {"msg": "Masukan nama aplikasi"}
+
     try:
-        if "whatsapp_desktop" in query:
+        if query == "whatsapp_desktop":
             return upget_dl("https://whatsapp-desktop.en.uptodown.com/windows")
-        elif "apkpure" in query:
+        elif query == "apkpure":
             return apk_dl(query)
-        elif "apkmirror" in query:
-            try:
-                d = apkmirror.home(query)
-                return d
-            except:
-                try:
-                    d = apkmirror.grab(query)
-                    return d
-                except:
-                    return "nothing"
+        elif query == "apkmirror":
+            return apkmirror.home(query) or apkmirror.grab(query) or "nothing"
+        else:
+            raise ValueError("Invalid query")
     except Exception as e:
         return {"msg": f"aplikasi tidak tersedia {e}"}
+
         
 @app.route("/ammusic", methods=["GET"])
 def amazon():
@@ -97,12 +91,11 @@ def amazon():
             c1 = cleanurl(query, ['marketplaceId', 'musicTerritory', 'ref'], remove=True)
             return {"Status": True, "result": c1}
     except Exception as e:
-        return {"Status": False, "msg": e}
+        return {"Status": False, "msg": e} 
 
 
 def get_domain(url):
     """Extract the domain from a URL."""
-    import re
     return match.group(1) if (match := re.search(r"https?://([^/]+)/?", url)) else None
 
 @app.route("/stream", methods=["GET"])
@@ -188,7 +181,7 @@ def rom():  # sourcery skip: remove-redundant-if
                 warning = [ver.get_text() for ver in data.select("#section > div > section:nth-child(2) > div.alert.alert-danger > ul > li")][0]
                 if warning is not None:
                     return {"msg": f"file error because {warning}"}
-            except:
+            except IndexError:
                 # for get all url
                 title = data.find("table", {"class": "details-table"}).find("td").find_next("td").get_text()
                 filesize = data.find("table", {"class": "details-table"}).find("td").find_next("td").find_next("td").find_next("td").get_text()

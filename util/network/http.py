@@ -2,6 +2,7 @@ import cloudscraper
 import requests
 
 from util.utils import uegen
+from typing import Union
 
 req = requests.session()
 
@@ -30,7 +31,7 @@ def cf():
     })
     return reqcq
 
-def starter(url, *, is_cf=False, single=False):
+def starter(url: str, *, is_cf: bool = False, single: bool = False) -> Union[str, requests.Response, cloudscraper.requests.Response]:
     """
     Makes a request to a website and disguises it as a visit by a real user.
 
@@ -40,7 +41,7 @@ def starter(url, *, is_cf=False, single=False):
         single (bool, optional): Makes a single request to the website without maintaining a session. Defaults to False.
 
     Returns:
-        str: The result of the request. This could be the status code or the response content.
+        Union[str, requests.Response, cloudscraper.requests.Response]: The result of the request. This could be the status code or the response content.
     """
     if is_cf:
         reqcf = cf()
@@ -59,13 +60,19 @@ def starter(url, *, is_cf=False, single=False):
     return req.get(url, headers=headers)
 
 
-def rpost(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -> requests.Response:
+def rpost(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -> Union[cloudscraper.requests.Response, requests.Response, None]:
     """
-    Function Get
-    :param url: str: input your url to post
-    :param is_cf: bool: set True if you scrape cf page
-    :param single: bool: This is intended for single requests of a site, not a session
-    :return: requests.Response: a request
+    Sends a POST request to the specified URL.
+
+    Args:
+        url (str): The URL to send the request to.
+        is_cf (bool, optional): Set to True if the request is to a Cloudflare-protected page. Defaults to False.
+        single (bool, optional): Set to True for a single request outside of a session. Defaults to False.
+        *args: Additional arguments to pass to the request function.
+        **kwargs: Additional keyword arguments to pass to the request function.
+
+    Returns:
+        Union[cloudscraper.requests.Response, requests.Response, None]: The response to the request, or None if the request failed.
     """
     if is_cf:
         reqcf = cf()
@@ -76,15 +83,20 @@ def rpost(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) 
     
     return req.post(url, *args, **kwargs)
 
-def rget(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -> requests.Response:
+def rget(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -> Union[cloudscraper.requests.Response, requests.Response, None]:
     """
-    Function Get
-    :param url: str: input your url to get
-    :param is_cf: bool: set True if you want to scrape cf page
-    :param single: bool: This is intended for single requests of a site, not a session
-    :return: requests.Response: a request
-    """
+    Sends a GET request to the specified URL.
 
+    Args:
+        url (str): The URL to send the request to.
+        is_cf (bool, optional): Set to True if the request is to a Cloudflare-protected page. Defaults to False.
+        single (bool, optional): Set to True for a single request outside of a session. Defaults to False.
+        *args: Additional arguments to pass to the request function.
+        **kwargs: Additional keyword arguments to pass to the request function.
+
+    Returns:
+        Union[cloudscraper.requests.Response, requests.Response, None]: The response to the request, or None if the request failed.
+    """
     if is_cf:
         reqcf = cf()
         return reqcf.get(url, *args, **kwargs)

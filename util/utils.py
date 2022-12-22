@@ -1,8 +1,8 @@
 import base64
+import contextlib
 import datetime
-import hashlib
 import re
-import string
+from typing import List, Optional, Union
 
 import requests
 from fake_useragent import UserAgent
@@ -10,7 +10,7 @@ from fake_useragent import UserAgent
 from .html.genua import GenerateMobileUseragent, GetRandomUserAgent
 
 
-def fix_link(url):
+def fix_link(url: str) -> str:
     """
     Fixes a shortened URL by expanding it.
 
@@ -22,9 +22,9 @@ def fix_link(url):
     """
     return requests.get(url).url
 
-def clean_http(captions, *, newline=False):
+def clean_http(captions: str, *, newline: Optional[bool]=False) -> str:
     """
-    Removes HTTP and HTTPS links from a string.
+    Removes HTTP and HTTPS links, newline characters, and tab characters from a string.
 
     Args:
         captions (str): The string to clean.
@@ -33,16 +33,12 @@ def clean_http(captions, *, newline=False):
     Returns:
         str: The cleaned string.
     """
-    if newline:
-        d2 = re.sub(r"https?://\S+", "", captions)
-        caption = re.sub(r'\t+', '', d2)
-        caption = re.sub(r'\n', '', d2)
-    else:
-        d2 = re.sub(r"https?://\S+", "", captions)
-        caption = re.sub(r'\t+', '', d2)
-    return caption
+    # Remove HTTP and HTTPS links, newline characters, and tab characters
+    pattern = r"(https?://\S+|\n|\t+)" if newline else r"(https?://\S+|\t+)"
+    return re.sub(pattern, "", captions)
 
-def uegen(*, default=False, mobile=False, random=False, alter=False, spesific=None):
+
+def uegen(*, default: Optional[bool]=False, mobile: Optional[bool]=False, random: Optional[bool]=False, alter: Optional[bool]=False, spesific: Optional[List[str]]=None) -> str:
     """
     Generates a user agent string.
 
@@ -51,7 +47,7 @@ def uegen(*, default=False, mobile=False, random=False, alter=False, spesific=No
         mobile (bool, optional): Generates a mobile user agent. Defaults to False.
         random (bool, optional): Generates a random user agent. Defaults to False.
         alter (bool, optional): Generates a minimal random user agent. Defaults to False.
-        spesific (list[str], optional): Generates a user agent for a specific browser. Defaults to None.
+        spesific (List[str], optional): Generates a user agent for a specific browser. Defaults to None.
 
     Returns:
         str: A user agent string.
@@ -75,8 +71,7 @@ def uegen(*, default=False, mobile=False, random=False, alter=False, spesific=No
         return ua1.random
     return ''
 
-
-def csrfget(bs4, *, middleware=False, csrf=False):
+def csrfget(bs4, *, middleware: Optional[bool]=False, csrf: Optional[bool]=False) -> Optional[str]:
     """
     Extracts the CSRF token from an HTML element.
 
@@ -86,7 +81,7 @@ def csrfget(bs4, *, middleware=False, csrf=False):
         csrf (bool, optional): Extracts the CSRF token using the "csrf" input. Defaults to False.
 
     Returns:
-        str: The CSRF token.
+        Optional[str]: The CSRF token, or None if no token could be found.
     """
     if middleware:
         return bs4.find("input", {"name": "csrfmiddlewaretoken"}).get("value")
@@ -141,18 +136,21 @@ def get_readable_time(seconds: int, unix_epoch: bool = False, utc: bool = False)
 
     return result
 
-def get_readable_size(size):
+def get_readable_size(size: int) -> Union[str, None]:
     """
-    Return a human-readable size format
+    Return a human-readable size format.
+
+    This function converts the given size in bytes to a human-readable format,
+    such as "1.23 MiB" for megabytes.
 
     Args:
-        size (int): The size in bytes to convert to a human-readable format
+        size (int): The size in bytes to convert to a human-readable format.
 
     Returns:
-        str: The size in a human-readable format
+        Union[str, None]: The size in a human-readable format, or None if the size is 0.
     """
     if not size:
-        return ""
+        return None
     power = 2**10
     raised_to_pow = 0
     dict_power_n = {0: "", 1: "Ki", 2: "Mi", 3: "Gi", 4: "Ti"}
@@ -163,14 +161,16 @@ def get_readable_size(size):
     return f"{str(round(size, 2))} {dict_power_n[raised_to_pow]}B"
 
 
-def detect_string_type(string):
-    """This is intended for type hash detection
+def detect_string_type(string: str) -> Union[str, None]:
+    """Determine the type of the given string.
+
+    This function is intended for detecting the type of a hash or encoded string.
 
     Args:
-        string (str): str
+        string (str): The string to detect the type of.
 
     Returns:
-        str: result
+        Union[str, None]: The type of the string, or None if the type could not be determined.
     """
     if all(c in string.hexdigits for c in string):
         return "hex"
@@ -184,10 +184,8 @@ def detect_string_type(string):
             128: "sha512",
         }[len(string)]
     elif all(c in string.ascii_letters + string.digits + "+/=" for c in string):
-        try:
+        with contextlib.suppress(Exception):
             # Decode the string using base64
             base64.b64decode(string)
             return "base64"
-        except:
-            pass
-    return "unknown"
+    return None

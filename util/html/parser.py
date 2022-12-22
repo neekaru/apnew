@@ -11,13 +11,20 @@ from w3lib.url import url_query_cleaner
 from util.network.http import rget, rpost
 
 
-def get_bs4(url):
+def get_bs4(url: str) -> Union[BeautifulSoup, None]:
     """
-    Beautifulbs4 simple function
-    :param url: for url
-    :return: beautiful function
+    Returns a Beautiful Soup object from an HTML string.
+    
+    Args:
+        url (str): The HTML string.
+    
+    Returns:
+        Union[BeautifulSoup, None]: A Beautiful Soup object, or None if the HTML string is invalid.
     """
-    return BeautifulSoup(url, "html.parser")
+    try:
+        return BeautifulSoup(url, "html.parser")
+    except Exception:
+        return None
 
 def download_webpage_with_post(url: str, cf: bool = False, single: bool = False, parse_as: str = "html", headers: Dict[str, str] = None, data: Dict[str, Any] = None, *args, **kwargs) -> Union[BeautifulSoup, str, Dict[str, Any]]:
     # sourcery skip: raise-specific-error
@@ -59,8 +66,6 @@ def download_webpage_with_post(url: str, cf: bool = False, single: bool = False,
     elif parse_as == "Nothing":
         return response
 
-
-
 def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as: str = "html", headers: Dict[str, str] = None, *args, **kwargs) -> Union[BeautifulSoup, str]:
     # sourcery skip: raise-specific-error
     """
@@ -100,7 +105,6 @@ def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as:
     elif parse_as == "Nothing":
         return response
 
-
 # porting from old api
 def getfilehost(url: str, hostname: bool = False) -> str:
     """
@@ -132,7 +136,7 @@ def cleanurl(url: str, *args, **kwargs) -> str:
     """
     return url_query_cleaner(url, *args, **kwargs)
 
-def trailing(bs4, *, quotation_mark=False, apostrophe=False, combo=False):
+def trailing(bs4: str, *, quotation_mark: bool=False, apostrophe: bool=False, combo: bool=False) -> str:
     """
     Removes trailing characters from a string.
 
@@ -225,10 +229,10 @@ def fix_annoy(bs4: str, double_newline: bool = False, double_space: bool = False
         return re.sub(r'[^\x00-\x7F]', '', bs4)
     return bs4
 
-def fix_url(url: str, *, clean=False, quote_plus=False, quote=False, quote_fix=False, unquote=False):
+def fix_url(url: str, *, clean: bool=False, quote_plus: bool=False, quote: bool=False, quote_fix: bool=False, unquote: bool=False) -> Union[str, None]:
     """
     Fixes various issues with a URL.
-
+    
     Args:
         url (str): The URL to fix.
         clean (bool, optional): Removes backslashes from the URL. Defaults to False.
@@ -236,9 +240,9 @@ def fix_url(url: str, *, clean=False, quote_plus=False, quote=False, quote_fix=F
         quote (bool, optional): Encodes special characters in the URL using %XX. Defaults to False.
         quote_fix (bool, optional): Encodes the URL using %XX, with the exception of "/" and ":". Defaults to False.
         unquote (bool, optional): Decodes the URL using %XX. Defaults to False.
-
+    
     Returns:
-        str: The fixed URL.
+        Union[str, None]: The fixed URL, or None if the URL is invalid.
     """
     if quote_fix:
         return urllib.parse.quote(url, safe="/:")
@@ -253,26 +257,27 @@ def fix_url(url: str, *, clean=False, quote_plus=False, quote=False, quote_fix=F
     else:
         return url
 
-
-def extract_input_value(html, name):
-    """Extracts the value of an input element with a specific name from an HTML string.
-
+def extract_input_value(html: str, name: str) -> str:
+    """
+    Extracts the value of an input element with a specific name from an HTML string.
+    
     Args:
         html (str): The HTML string.
         name (str): The name of the input element to search for.
-
+    
     Returns:
         str: The value of the input element.
     """
     pattern = fr'<input.*?name="{name}".*?value="(.*?)".*?>'
-    return match[1] if (match := re.search(pattern, html)) else ""
+    return match.group(1) if (match := re.search(pattern, html)) else ""
 
-def extract_form_action(self, html):
-    """Extracts the action attribute from a form element in an HTML string.
-
+def extract_form_action(html: str) -> str:
+    """
+    Extracts the action attribute from a form element in an HTML string.
+    
     Args:
         html (str): The HTML string.
-
+    
     Returns:
         str: The value of the action attribute.
     """
@@ -294,18 +299,17 @@ def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> Union[str
     element = bs4.find(tag) if tag else bs4
     return element.get(attr) if element else None
 
-
-def get_title(bs4, generic=False, force=False, *args, **kwargs):
+def get_title(bs4: BeautifulSoup, generic: bool=False, force: bool=False, *args, **kwargs) -> str:
     """
     Extracts the title from an HTML element.
-
+    
     Args:
-        bs4: a Beautiful Soup object representing an HTML element.
+        bs4 (BeautifulSoup): a Beautiful Soup object representing an HTML element.
         generic (bool, optional): Extracts the title using the "title" tag. Defaults to False.
         force (bool, optional): Extracts the text from the entire element, ignoring tags. Defaults to False.
         *args: Arguments passed to the `find` method of `bs4`.
         **kwargs: Keyword arguments passed to the `find` method of `bs4`.
-
+    
     Returns:
         str: The title of the element.
     """
