@@ -1,23 +1,23 @@
 import codecs
 import re
 import urllib.parse
-from typing import Any, Dict, List, Union, Optional
+from typing import Any
 
+import defusedxml
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from lxml import etree
 from w3lib.url import url_query_cleaner
 
 from util.network.http import rget, rpost
 
 
-def get_bs4(url: str) -> Union[BeautifulSoup, None]:
+def get_bs4(url: str) -> BeautifulSoup | None:
     """
     Returns a Beautiful Soup object from an HTML string.
-    
+
     Args:
         url (str): The HTML string.
-    
+
     Returns:
         Union[BeautifulSoup, None]: A Beautiful Soup object, or None if the HTML string is invalid.
     """
@@ -26,11 +26,21 @@ def get_bs4(url: str) -> Union[BeautifulSoup, None]:
     except Exception:
         return None
 
-def download_webpage_with_post(url: str, cf: bool = False, single: bool = False, parse_as: str = "html", headers: Dict[str, str] = None, data: Dict[str, Any] = None, *args, **kwargs) -> Union[BeautifulSoup, str, Dict[str, Any]]:
+
+def download_webpage_with_post(
+    url: str,
+    cf: bool = False,
+    single: bool = False,
+    parse_as: str = "html",
+    headers: dict[str, str] = None,
+    data: dict[str, Any] = None,
+    *args,
+    **kwargs,
+) -> BeautifulSoup | str | dict[str, Any]:
     # sourcery skip: raise-specific-error
     """
     Downloads and optionally parses the response of a webpage using a POST request.
-    
+
     Parameters:
         url (str): The URL of the webpage to download.
         cf (bool): A flag indicating whether to use the cloudscraper on requests.post() function which can handles Cloudflare protection.
@@ -40,10 +50,10 @@ def download_webpage_with_post(url: str, cf: bool = False, single: bool = False,
         data (Dict[str, Any]): A dictionary of data to send in the body of the request.
         *args: Additional positional arguments to pass to the requests.post() or cf() function.
         **kwargs: Additional keyword arguments to pass to the requests.post() or cf() function.
-        
+
     Returns:
         BeautifulSoup, str, or Dict[str, Any]: A BeautifulSoup object containing the parsed HTML of the webpage, the raw response text as a string, or the response JSON data as a dictionary, depending on the value of `parse_as`.
-        
+
     Raises:
         Exception: If the request to the webpage fails.
     """
@@ -55,10 +65,12 @@ def download_webpage_with_post(url: str, cf: bool = False, single: bool = False,
         response = rpost(url, headers=headers, data=data, *args, **kwargs)
 
     if response.status_code != 200:
-        raise Exception(f'Request to {url} failed with status code {response.status_code}')
+        raise Exception(
+            f"Request to {url} failed with status code {response.status_code}"
+        )
 
     if parse_as == "html":
-        return BeautifulSoup(response.text, 'html.parser')
+        return BeautifulSoup(response.text, "html.parser")
     elif parse_as == "json":
         return response.json()
     elif parse_as == "text":
@@ -66,11 +78,20 @@ def download_webpage_with_post(url: str, cf: bool = False, single: bool = False,
     elif parse_as == "Nothing":
         return response
 
-def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as: str = "html", headers: Dict[str, str] = None, *args, **kwargs) -> Union[BeautifulSoup, str]:
+
+def download_webpage(
+    url: str,
+    cf: bool = False,
+    single: bool = False,
+    parse_as: str = "html",
+    headers: dict[str, str] = None,
+    *args,
+    **kwargs,
+) -> BeautifulSoup | str:
     # sourcery skip: raise-specific-error
     """
     Downloads and parses the HTML of a webpage.
-    
+
     Parameters:
         url (str): The URL of the webpage to download.
         cf (bool): A flag indicating whether to use the cloudscraper on requests.get() function which can handles Cloudflare protection.
@@ -79,10 +100,10 @@ def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as:
         headers (Dict[str, str]): A dictionary of HTTP headers to send with the request.
         *args: Additional positional arguments to pass to the requests.get() or cf() function.
         **kwargs: Additional keyword arguments to pass to the requests.get() or cf() function.
-        
+
     Returns:
         BeautifulSoup: A BeautifulSoup object containing the parsed HTML of the webpage.
-        
+
     Raises:
         Exception: If the request to the webpage fails.
     """
@@ -94,10 +115,12 @@ def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as:
         response = rget(url, headers=headers, *args, **kwargs)
 
     if response.status_code != 200:
-        raise Exception(f'Request to {url} failed with status code {response.status_code}')
+        raise Exception(
+            f"Request to {url} failed with status code {response.status_code}"
+        )
 
     if parse_as == "html":
-        return BeautifulSoup(response.text, 'html.parser')
+        return BeautifulSoup(response.text, "html.parser")
     elif parse_as == "json":
         return response.json()
     elif parse_as == "text":
@@ -105,15 +128,16 @@ def download_webpage(url: str, cf: bool = False, single: bool = False, parse_as:
     elif parse_as == "Nothing":
         return response
 
+
 # porting from old api
 def getfilehost(url: str, hostname: bool = False) -> str:
     """
     Returns the file host or hostname of a URL.
-    
+
     Parameters:
         url (str): The URL to get the file host or hostname from.
         hostname (bool): A flag indicating whether to return the hostname (True) or file host (False).
-        
+
     Returns:
         str: The file host or hostname of the URL.
     """
@@ -122,21 +146,29 @@ def getfilehost(url: str, hostname: bool = False) -> str:
     else:
         return url.strip("/ ").split("/")[-1]
 
+
 def cleanurl(url: str, *args, **kwargs) -> str:
     """
     Cleans a URL by removing query parameters and other unnecessary elements.
-    
+
     Parameters:
         url (str): The URL to clean.
         *args: Additional positional arguments to pass to the `url_query_cleaner` function.
         **kwargs: Additional keyword arguments to pass to the `url_query_cleaner` function.
-        
+
     Returns:
         str: The cleaned URL.
     """
     return url_query_cleaner(url, *args, **kwargs)
 
-def trailing(bs4: str, *, quotation_mark: bool=False, apostrophe: bool=False, combo: bool=False) -> str:
+
+def trailing(
+    bs4: str,
+    *,
+    quotation_mark: bool = False,
+    apostrophe: bool = False,
+    combo: bool = False,
+) -> str:
     """
     Removes trailing characters from a string.
 
@@ -150,15 +182,22 @@ def trailing(bs4: str, *, quotation_mark: bool=False, apostrophe: bool=False, co
         str: The modified string.
     """
     if quotation_mark:
-        return bs4.replace('"', '')
+        return bs4.replace('"', "")
     if apostrophe:
         return bs4.replace("'", "")
-    return bs4.replace("'", "").replace('"', ' ') if combo else bs4
+    return bs4.replace("'", "").replace('"', " ") if combo else bs4
 
-def find_element_by_css_selector(html: str, selector: str, method: str = 'css', single: bool = False, parse_html: bool = True) -> Union[List[Tag], Tag]:
+
+def find_element_by_css_selector(
+    html: str,
+    selector: str,
+    method: str = "css",
+    single: bool = False,
+    parse_html: bool = True,
+) -> list[Tag] | Tag:
     # sourcery skip: assign-if-exp, switch
     """
-    Find that needle in the haystack! This function helps you locate an HTML element (or elements) within an HTML document using a CSS selector or XPath expression. 
+    Find that needle in the haystack! This function helps you locate an HTML element (or elements) within an HTML document using a CSS selector or XPath expression.
 
     Args:
     - html (str): The HTML document as a string. Think of it as the haystack where you'll be searching for the needle (the element).
@@ -173,20 +212,22 @@ def find_element_by_css_selector(html: str, selector: str, method: str = 'css', 
 
     # Parse the HTML document
     if parse_html:
-        soup = BeautifulSoup(html, 'html.parser')
-    root = etree.fromstring(html)
+        soup = BeautifulSoup(html, "html.parser")
+    root = defusedxml.fromstring(
+        html
+    )  # use defusedxml.fromstring instead of etree.fromstring
 
     # Find the element(s) using the specified method
-    if method == 'css':
+    if method == "css":
         if single:
             elements = soup.select_one(selector)
         else:
             elements = soup.select(selector)
-    elif method == 'xpath':
+    elif method == "xpath":
         if single:
             elements = root.xpath(selector)
         else:
-            elements = root.xpath(f'/{selector}')
+            elements = root.xpath(f"/{selector}")
     else:
         raise ValueError('Invalid method. Choose "css" or "xpath".')
 
@@ -194,8 +235,14 @@ def find_element_by_css_selector(html: str, selector: str, method: str = 'css', 
     return elements
 
 
-def fix_annoy(bs4: str, double_newline: bool = False, double_space: bool = False, remove_part: Optional[str] = None,
-              unicode_escape: Optional[bool] = None, weird_unicode_remover: Optional[bool] = None) -> str:
+def fix_annoy(
+    bs4: str,
+    double_newline: bool = False,
+    double_space: bool = False,
+    remove_part: str | None = None,
+    unicode_escape: bool | None = None,
+    weird_unicode_remover: bool | None = None,
+) -> str:
     """Fix annoying parts of a string.
 
     This function is intended for fixing some annoying parts of a string, such as double newlines, double spaces, and
@@ -217,7 +264,7 @@ def fix_annoy(bs4: str, double_newline: bool = False, double_space: bool = False
         str: The modified input string.
     """
     if double_newline:
-        bs4 = bs4.replace('\n','').rstrip()
+        bs4 = bs4.replace("\n", "").rstrip()
     if double_space and remove_part is None:
         bs4 = bs4.replace("  ", "")
     if remove_part is not None:
@@ -226,13 +273,22 @@ def fix_annoy(bs4: str, double_newline: bool = False, double_space: bool = False
     if unicode_escape is not None:
         return codecs.decode(bs4, "unicode_escape")
     if weird_unicode_remover is not None:
-        return re.sub(r'[^\x00-\x7F]', '', bs4)
+        return re.sub(r"[^\x00-\x7F]", "", bs4)
     return bs4
 
-def fix_url(url: str, *, clean: bool=False, quote_plus: bool=False, quote: bool=False, quote_fix: bool=False, unquote: bool=False) -> Union[str, None]:
+
+def fix_url(
+    url: str,
+    *,
+    clean: bool = False,
+    quote_plus: bool = False,
+    quote: bool = False,
+    quote_fix: bool = False,
+    unquote: bool = False,
+) -> str | None:
     """
     Fixes various issues with a URL.
-    
+
     Args:
         url (str): The URL to fix.
         clean (bool, optional): Removes backslashes from the URL. Defaults to False.
@@ -240,7 +296,7 @@ def fix_url(url: str, *, clean: bool=False, quote_plus: bool=False, quote: bool=
         quote (bool, optional): Encodes special characters in the URL using %XX. Defaults to False.
         quote_fix (bool, optional): Encodes the URL using %XX, with the exception of "/" and ":". Defaults to False.
         unquote (bool, optional): Decodes the URL using %XX. Defaults to False.
-    
+
     Returns:
         Union[str, None]: The fixed URL, or None if the URL is invalid.
     """
@@ -257,34 +313,54 @@ def fix_url(url: str, *, clean: bool=False, quote_plus: bool=False, quote: bool=
     else:
         return url
 
+
 def extract_input_value(html: str, name: str) -> str:
     """
     Extracts the value of an input element with a specific name from an HTML string.
-    
+
     Args:
         html (str): The HTML string.
         name (str): The name of the input element to search for.
-    
+
     Returns:
         str: The value of the input element.
     """
-    pattern = fr'<input.*?name="{name}".*?value="(.*?)".*?>'
+    pattern = rf'<input.*?name="{name}".*?value="(.*?)".*?>'
     return match.group(1) if (match := re.search(pattern, html)) else ""
+
+
+def extract_form_data(form) -> dict[str, str]:
+    """Extracts data from a form element.
+
+    Args:
+        form: The form element to extract data from.
+
+    Returns:
+        A dictionary mapping form input names to their values.
+    """
+    data = {}
+    for input_element in form.find_all("input"):
+        name = input_element.get("name")
+        value = input_element.get("value")
+        data[name] = value
+    return data
+
 
 def extract_form_action(html: str) -> str:
     """
     Extracts the action attribute from a form element in an HTML string.
-    
+
     Args:
         html (str): The HTML string.
-    
+
     Returns:
         str: The value of the action attribute.
     """
     pattern = r'<form.*?action="(.*?)".*?>'
     return match.group(1) if (match := re.search(pattern, html)) else ""
-    
-def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> Union[str, None]:
+
+
+def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> str | None:
     """
     Extracts the specified attribute from an HTML element.
 
@@ -299,17 +375,20 @@ def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> Union[str
     element = bs4.find(tag) if tag else bs4
     return element.get(attr) if element else None
 
-def get_title(bs4: BeautifulSoup, generic: bool=False, force: bool=False, *args, **kwargs) -> str:
+
+def get_title(
+    bs4: BeautifulSoup, generic: bool = False, force: bool = False, *args, **kwargs
+) -> str:
     """
     Extracts the title from an HTML element.
-    
+
     Args:
         bs4 (BeautifulSoup): a Beautiful Soup object representing an HTML element.
         generic (bool, optional): Extracts the title using the "title" tag. Defaults to False.
         force (bool, optional): Extracts the text from the entire element, ignoring tags. Defaults to False.
         *args: Arguments passed to the `find` method of `bs4`.
         **kwargs: Keyword arguments passed to the `find` method of `bs4`.
-    
+
     Returns:
         str: The title of the element.
     """

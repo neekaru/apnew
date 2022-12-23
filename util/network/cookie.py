@@ -1,10 +1,18 @@
-from util.html.parser import fix_url
-from typing import Dict, Any
+from typing import Any
 
+from util.html.parser import fix_url
 
 #  still in beta since i want grab some cookie
 
-def get_cookie(cookie, *, debug: bool = False, two: bool = False, match: int = None, match1: int = None) -> Dict[str, Any]:
+
+def get_cookie(
+    cookie,
+    *,
+    debug: bool = False,
+    two: bool = False,
+    match: int = None,
+    match1: int = None
+) -> dict[str, Any]:
     """
     Extracts the Set-Cookie value from the headers of a request.
 
@@ -19,17 +27,19 @@ def get_cookie(cookie, *, debug: bool = False, two: bool = False, match: int = N
         Dict[str, Any]: A dictionary of Set-Cookie values.
     """
     if two:
-        pas1 = cookie.headers['Set-Cookie'].split(" ")[match]
-        pas2 = cookie.headers['Set-Cookie'].split(" ")[match1]
+        pas1 = cookie.headers["Set-Cookie"].split(" ")[match]
+        pas2 = cookie.headers["Set-Cookie"].split(" ")[match1]
         return pas1, pas2
     if debug:
-        return cookie.headers['Set-Cookie'].split(" ")
-    else: 
-        pas = cookie.headers['Set-Cookie'].split(" ")[match]
+        return cookie.headers["Set-Cookie"].split(" ")
+    else:
+        pas = cookie.headers["Set-Cookie"].split(" ")[match]
     return pas
 
 
-def fix_cookie(cookie, *, default: bool = False, quote: bool = False, unquote: bool = False) -> Any:
+def fix_cookie(
+    cookie, *, default: bool = False, quote: bool = False, unquote: bool = False
+) -> Any:
     """
     Fixes a cookie by cleaning, quoting, or unquoting it.
 
@@ -43,11 +53,11 @@ def fix_cookie(cookie, *, default: bool = False, quote: bool = False, unquote: b
         Any: The fixed cookie.
     """
     if default:
-        return cookie.split(';')[0]
+        return cookie.split(";")[0]
     elif quote:
         return fix_url(cookie, quote_plus=True)
 
     if unquote and default:
-        return fix_url(cookie, unquote=True).split(';')[0]
+        return fix_url(cookie, unquote=True).split(";")[0]
     else:
         return fix_url(cookie, unquote=True)

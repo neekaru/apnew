@@ -1,4 +1,4 @@
-# so this common for my next feature for something like check my update bla bla           
+# so this common for my next feature for something like check my update bla bla
 from util.html.parser import get_bs4, get_link_single
 from util.network.http import rget
 
@@ -16,21 +16,22 @@ def check(url):  # sourcery skip: inline-immediately-returned-variable
     try:
         get = rget(url1)
         bs = get_bs4(get.text)
-        based = bs.select_one("div.content > section.versions.list > div.content#versions-items-list [data-url]")
+        based = bs.select_one(
+            "div.content > section.versions.list > div.content#versions-items-list [data-url]"
+        )
         link = get_link_single(based, "data-url")
         return link
     except Exception:
         return link
 
-def get_dl(url): 
+
+def get_dl(url):
     # first get your link
     d = check(url)
     try:
         bs = get_bs4(rget(d).text)
-        return func_1(
-            bs, 'div.info > div.version', 'tr:nth-child(6) > td:nth-child(3)'
-        )
-    except Exception as e:
+        return func_1(bs, "div.info > div.version", "tr:nth-child(6) > td:nth-child(3)")
+    except Exception:
         try:
             dl_l1 = f"{d}/download"
             response = rget(dl_l1)
@@ -48,10 +49,10 @@ def func_1(bs, arg1, arg2):
     """
     Just a simpler way to clean my shit code
     """
-    dl_link = get_link_single(bs.select_one('#detail-download-button'), "data-url")
+    dl_link = get_link_single(bs.select_one("#detail-download-button"), "data-url")
     size = bs.find("p", class_="size").get_text()
     version = bs.select_one(arg1).get_text()
-    app_name = bs.find("h1", id="detail-app-name").get_text().replace('\n','').rstrip()
+    app_name = bs.find("h1", id="detail-app-name").get_text().replace("\n", "").rstrip()
     date = bs.select_one(arg2).get_text()
 
     return {

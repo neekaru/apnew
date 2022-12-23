@@ -1,9 +1,10 @@
-fake-useragent
 BeautifulSoup4
+defusedxml
+fake-useragent
 flask
-requests
-w3lib
-PyBypass
 get-useragents
 # for support brotli
 https://github.com/google/brotli/archive/refs/heads/master.zip
+PyBypass
+requests
+w3lib

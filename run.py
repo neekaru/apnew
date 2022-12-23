@@ -1,24 +1,19 @@
 import os
+import re
 import signal
 import time
-import re
 
-from flask import Flask, jsonify, redirect, render_template, request
+from flask import Flask, jsonify, render_template, request
 
-from direct.media.music import soundcloud, spotify
 from direct.direk import direct_link
-from direct.media.stream import fb, pinterest, snackvideo, tiktik, twitter, helo
+from direct.media.music import spotify
+from direct.media.stream import fb, helo, pinterest, snackvideo, tiktik, twitter
 from direct.rom import coolrom
 from direct.update.apkmirror import grab, home
 from direct.update.apkpure import get_dl as apk_dl
 from direct.update.uptodown import get_dl as upget_dl
 from util.exceptions import FukUSeragent, GagalDikarenakan
-from util.html.parser import (
-    cleanurl,
-    get_link_single,
-    getfilehost,
-    download_webpage,
-)
+from util.html.parser import cleanurl, download_webpage, get_link_single, getfilehost
 from util.utils import fix_link
 
 app = Flask(__name__)
@@ -46,7 +41,7 @@ def test():
         # for testing perpouse
         # return render_template("404.html")
         return
-    query = request.args.get("url")
+    request.args.get("url")
     return
 
 

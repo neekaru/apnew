@@ -1,8 +1,7 @@
 import base64
 import contextlib
 import datetime
-import re, string
-from typing import List, Optional, Union
+import re
 
 import requests
 from fake_useragent import UserAgent
@@ -22,7 +21,8 @@ def fix_link(url: str) -> str:
     """
     return requests.get(url).url
 
-def clean_http(captions: str, *, newline: Optional[bool]=False) -> str:
+
+def clean_http(captions: str, *, newline: bool | None = False) -> str:
     """
     Removes HTTP and HTTPS links, newline characters, and tab characters from a string.
 
@@ -38,7 +38,14 @@ def clean_http(captions: str, *, newline: Optional[bool]=False) -> str:
     return re.sub(pattern, "", captions)
 
 
-def uegen(*, default: Optional[bool]=False, mobile: Optional[bool]=False, random: Optional[bool]=False, alter: Optional[bool]=False, spesific: Optional[List[str]]=None) -> str:
+def uegen(
+    *,
+    default: bool | None = False,
+    mobile: bool | None = False,
+    random: bool | None = False,
+    alter: bool | None = False,
+    spesific: list[str] | None = None,
+) -> str:
     """
     Generates a user agent string.
 
@@ -58,10 +65,12 @@ def uegen(*, default: Optional[bool]=False, mobile: Optional[bool]=False, random
         return GenerateMobileUseragent()
 
     if random:
-        ua = UserAgent(browsers=['firefox', 'edge', 'safari', 'chrome'], use_external_data=True)
+        ua = UserAgent(
+            browsers=["firefox", "edge", "safari", "chrome"], use_external_data=True
+        )
         return ua.random
     elif alter:
-        ua = UserAgent(browsers=['edge', 'chrome'])
+        ua = UserAgent(browsers=["edge", "chrome"])
         return ua.random
 
     if spesific is None:
@@ -69,9 +78,12 @@ def uegen(*, default: Optional[bool]=False, mobile: Optional[bool]=False, random
     elif spesific:
         ua1 = UserAgent(browsers=[spesific])
         return ua1.random
-    return ''
+    return ""
 
-def csrfget(bs4, *, middleware: Optional[bool]=False, csrf: Optional[bool]=False) -> Optional[str]:
+
+def csrfget(
+    bs4, *, middleware: bool | None = False, csrf: bool | None = False
+) -> str | None:
     """
     Extracts the CSRF token from an HTML element.
 
@@ -88,7 +100,10 @@ def csrfget(bs4, *, middleware: Optional[bool]=False, csrf: Optional[bool]=False
     if csrf:
         return None
 
-def get_readable_time(seconds: Union[int, float], unix_epoch: bool = False, utc: bool = False) -> str:
+
+def get_readable_time(
+    seconds: int | float, unix_epoch: bool = False, utc: bool = False
+) -> str:
     """
     Return a human-readable time format in the format %dd %hh %mm %ss.
 
@@ -144,7 +159,8 @@ def get_readable_time(seconds: Union[int, float], unix_epoch: bool = False, utc:
 
     return result
 
-def get_readable_size(size: int) -> Union[str, None]:
+
+def get_readable_size(size: int) -> str | None:
     """
     Return a human-readable size format.
 
@@ -169,7 +185,7 @@ def get_readable_size(size: int) -> Union[str, None]:
     return f"{str(round(size, 2))} {dict_power_n[raised_to_pow]}B"
 
 
-def detect_string_type(string: str) -> Union[str, None]:
+def detect_string_type(string: str) -> str | None:
     """Determine the type of the given string.
 
     This function is intended for detecting the type of a hash or encoded string.

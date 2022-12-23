@@ -2,15 +2,14 @@ import cloudscraper
 import requests
 
 from util.utils import uegen
-from typing import Union
 
 req = requests.session()
 
 HEADER_DEFAULT: dict = {
-        "User-Agent": uegen(default=True),
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-us,en;q=0.6',
-        'Sec-Fetch-Mode': 'navigate'
+    "User-Agent": uegen(default=True),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-us,en;q=0.6",
+    "Sec-Fetch-Mode": "navigate",
 }
 
 
@@ -18,20 +17,23 @@ def cf():
     """
     just wannabe cf
     """
-    reqcq = cloudscraper.create_scraper(browser={
-        "browser": "chrome",
-        "platform": "windows",
-        'mobile': False
-    })
-    reqcq.headers.update({
-        "User-Agent": uegen(default=True),
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-us,en;q=0.6',
-        'Sec-Fetch-Mode': 'navigate',
-    })
+    reqcq = cloudscraper.create_scraper(
+        browser={"browser": "chrome", "platform": "windows", "mobile": False}
+    )
+    reqcq.headers.update(
+        {
+            "User-Agent": uegen(default=True),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-us,en;q=0.6",
+            "Sec-Fetch-Mode": "navigate",
+        }
+    )
     return reqcq
 
-def starter(url: str, *, is_cf: bool = False, single: bool = False) -> Union[str, requests.Response, cloudscraper.requests.Response]:
+
+def starter(
+    url: str, *, is_cf: bool = False, single: bool = False
+) -> str | requests.Response | cloudscraper.requests.Response:
     """
     Makes a request to a website and disguises it as a visit by a real user.
 
@@ -46,21 +48,23 @@ def starter(url: str, *, is_cf: bool = False, single: bool = False) -> Union[str
     if is_cf:
         reqcf = cf()
         return reqcf.get(url)
-    
+
     headers = {
         "User-Agent": uegen(default=True),
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-us,en;q=0.6',
-        'Sec-Fetch-Mode': 'navigate',
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-us,en;q=0.6",
+        "Sec-Fetch-Mode": "navigate",
     }
-    
+
     if single:
         return requests.get(url, headers=headers)
-    
+
     return req.get(url, headers=headers)
 
 
-def rpost(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -> Union[cloudscraper.requests.Response, requests.Response, None]:
+def rpost(
+    url: str, is_cf: bool = False, single: bool = False, *args, **kwargs
+) -> cloudscraper.requests.Response | requests.Response | None:
     """
     Sends a POST request to the specified URL.
 
@@ -77,13 +81,16 @@ def rpost(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) 
     if is_cf:
         reqcf = cf()
         return reqcf.post(url, *args, **kwargs)
-    
+
     if single:
         return requests.post(url, *args, **kwargs)
-    
+
     return req.post(url, *args, **kwargs)
 
-def rget(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -> Union[cloudscraper.requests.Response, requests.Response, None]:
+
+def rget(
+    url: str, is_cf: bool = False, single: bool = False, *args, **kwargs
+) -> cloudscraper.requests.Response | requests.Response | None:
     """
     Sends a GET request to the specified URL.
 
@@ -100,7 +107,7 @@ def rget(url: str, is_cf: bool = False, single: bool = False, *args, **kwargs) -
     if is_cf:
         reqcf = cf()
         return reqcf.get(url, *args, **kwargs)
-    
+
     if single:
         return requests.get(url, *args, **kwargs)
 

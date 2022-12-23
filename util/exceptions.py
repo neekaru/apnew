@@ -7,10 +7,11 @@ class GagalDikarenakan(Exception):
     """
     Ini Sebuah kegagalan dikarenakan apa
     """
-    pass
+
 
 class Cloudflareacumalaka(CloudflareChallengeError):
     pass
+
 
 class FukUSeragent(FakeUserAgentError):
     pass
