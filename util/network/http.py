@@ -1,4 +1,3 @@
-from typing import Dict
 import cloudscraper
 import requests
 
@@ -14,17 +13,25 @@ HEADER_DEFAULT: dict = {
 }
 
 
-def get_new_headers(additional_headers: Dict[str, str]) -> Dict[str, str]:
+def get_new_headers(
+    additional_headers: dict[str, str] = None, edit_headers: dict[str, str] = None
+) -> dict[str, str]:
     """
-    Returns a dictionary of headers that includes the headers in `HEADER_DEFAULT` as well as the additional headers.
+    Returns a dictionary of headers that includes the headers in `HEADER_DEFAULT` as well as the additional headers. The headers in `HEADER_DEFAULT` can be modified using the `edit_headers` parameter.
 
     Args:
-        - additional_headers (Dict[str, str]): A dictionary of additional headers to be included in the returned dictionary.
+        - additional_headers (Optional[Dict[str, str]]): A dictionary of additional headers to be included in the returned dictionary. Defaults to None.
+        - edit_headers (Optional[Dict[str, str]]): A dictionary of headers to modify in `HEADER_DEFAULT`. The keys in this dictionary should match the keys in `HEADER_DEFAULT`, and the values will be used to update the corresponding values in `HEADER_DEFAULT`. Defaults to None.
 
     Returns:
-        - Dict[str, str]: A dictionary of headers that includes the headers in `HEADER_DEFAULT` as well as the additional headers.
+        - Dict[str, str]: A dictionary of headers that includes the modified headers in `HEADER_DEFAULT` as well as the additional headers.
     """
-    return {**HEADER_DEFAULT, **additional_headers}
+    headers = HEADER_DEFAULT
+    if edit_headers:
+        headers.update(edit_headers)
+    if additional_headers:
+        headers.update(additional_headers)
+    return headers
 
 
 def cf():

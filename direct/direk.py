@@ -11,7 +11,7 @@ from util.html.parser import (
     get_link_single,
     getfilehost,
 )
-from util.network.http import HEADER_DEFAULT
+from util.network.http import HEADER_DEFAULT, get_new_headers
 from util.utils import get_readable_size, uegen
 
 
@@ -21,6 +21,7 @@ def direct_link(query: str) -> dict:
         "eg.sharezweb.com": sharezweb,
         "sharezweb.com": sharezweb,
         "linkbox.to": sharezweb,
+        "hxfile.co": hxfile,
         "devuploads.com": devuploads().direct,
     }
 
@@ -44,22 +45,7 @@ def direct_link(query: str) -> dict:
 
 class devuploads:
     def __init__(self):
-        self.__headers_one: dict = (
-            {
-                "User-Agent": uegen(default=True),
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Language": "en-us,en;q=0.6",
-                "Sec-Fetch-Mode": "navigate",
-                "Referer": "https://dev.miuiflash.com/",
-            },
-        )
-        self.__headers_two: dict = {
-            "User-Agent": uegen(default=True),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-us,en;q=0.6",
-            "Sec-Fetch-Mode": "navigate",
-            "Referer": "https://devuploads.com/",
-        }
+        pass
 
     def selected_url(self, step: bool = False) -> str:
         links = [
@@ -83,7 +69,9 @@ class devuploads:
         form_secound = dl_ps.find("form", {"name": "F1"})
         data_first = extract_form_data(form_secound)
         response = download_webpage_with_post(
-            form_secound["action"], headers=self.__headers_one, data=data_first
+            form_secound["action"],
+            headers=get_new_headers({"Referer": "https://dev.miuiflash.com/"}),
+            data=data_first,
         )
         form_third = response.find("form", {"id": "techyneed"})
         data_second = extract_form_data(form_third)
@@ -91,10 +79,30 @@ class devuploads:
         # Call the linksucess function to generate the action URL
         action_url = self.selected_url(step=False)
         final = download_webpage_with_post(
-            action_url, headers=self.__headers_two, data=data_second
+            action_url,
+            headers=get_new_headers({"Referer": "https://devuploads.com/"}),
+            data=data_second,
         )
         dl_link = re.search(r'window\.location\s*=\s*"([^"]*)"', str(final)).group(1)
         return dl_link
+
+
+def hxfile(url: str) -> str:
+    """
+    Hxfile Direct Generator
+    Rewrite By Nekaru From PyBypasser and lk21
+    """
+    d = download_webpage(url, headers=HEADER_DEFAULT)
+    # get the form
+    search_form = d.find("form", {"name": "F1"})
+    data = extract_form_data(search_form)
+    test_post = download_webpage_with_post(
+        url, headers=get_new_headers({"Referer": url}), data=data
+    )
+    dl_link = get_link_single(
+        test_post.find("a", {"class": "btn btn-dow"}), attr="href"
+    )
+    return fix_url(dl_link, quote_fix=True)
 
 
 def sharezweb(
@@ -178,16 +186,19 @@ def oxycloud(query: str) -> str:  # sourcery skip: use-getitem-for-re-match-grou
     """
     base = download_webpage(query, headers=HEADER_DEFAULT, parse_as="html")
     base1 = get_link_single(base.find("a", {"class": "btn btn-primary btn-lg"}), "href")
-    headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "accept-language": "en-US,en;q=0.9",
-        "referer": query,
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "same-origin",
-        "sec-fetch-user": "?1",
-        "user-agent": uegen(default=True),
-    }
+    headers = get_new_headers(
+        additional_headers={
+            "referer": query,
+            "sec-fetch-dest": "document",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-user": "?1",
+        },
+        edit_headers={
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "accept-language": "en-US,en;q=0.9",
+            "user-agent": uegen(default=True),
+        },
+    )
     base2 = download_webpage(base1, headers=headers, parse_as="html")
     regex = r"page_url\s*=\s*'(.*?)';"
     if match := re.search(regex, str(base2)):
