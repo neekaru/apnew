@@ -9,11 +9,11 @@ from util.html.parser import (
     fix_annoy,
     fix_url,
     get_bs4,
-    get_link_single,
+    get_link_or_title,
 )
 from util.network.cookie import fix_cookie, get_cookie
 from util.network.http import HEADER_DEFAULT, rget, starter
-from util.utils import clean_http, get_readable_size, get_readable_time, uegen
+from util.utils import get_readable_size, get_readable_time, uegen
 
 
 class helo:
@@ -48,7 +48,7 @@ class helo:
 
     def result(self, url):
         d = download_webpage(url, headers=self.__headers, parse_as="html")
-        p = d.find_all("script")[5]
+        p = get_link_or_title(d, tag="script", multiple=True)[5]
         # this need to extract them
         d = self.parser_json_from_element(p)
         base_video = d["ArticleDetailInfo"]["share_download_video"]["cdn_url"]
@@ -112,19 +112,29 @@ def fb(url):
     bs4 = download_webpage_with_post(
         "https://fdown.net/download.php", headers=headers, data=data
     )
-    sd = get_link_single(bs4.select_one("#sdlink"), "href")
-    hd = get_link_single(bs4.select_one("#hdlink"), "href")
-    image_url = get_link_single(bs4.select_one(".lib-img-show"), "src")
-    title = fix_annoy(
-        bs4.select_one("div.lib-row:nth-child(1)").get_text(), double_newline=True
+    sd = get_link_or_title(bs4, tag="a", attr="href", args="#sdlink")
+    hd = get_link_or_title(bs4, tag="a", attr="href", args="#hdlink")
+    image_url = get_link_or_title(bs4, tag="img", attr="src", args=".lib-img-show")
+    title = get_link_or_title(
+        bs4,
+        tag="div",
+        args="div.lib-row:nth-child(1)",
+        process=fix_annoy,
+        double_newline=True,
     )
-    des = fix_annoy(
-        bs4.select_one("div.lib-row:nth-child(2)").get_text(),
+    des = get_link_or_title(
+        bs4,
+        tag="div",
+        args="div.lib-row:nth-child(2)",
+        process=fix_annoy,
         double_newline=True,
         remove_part="Description: ",
     )
-    waktu = fix_annoy(
-        bs4.select_one("div.lib-row:nth-child(3)").get_text(),
+    waktu = get_link_or_title(
+        bs4,
+        tag="div",
+        args="div.lib-row:nth-child(3)",
+        process=fix_annoy,
         double_newline=True,
         remove_part="Duration: ",
     )
@@ -163,13 +173,13 @@ def twitter(query):
         data=data,
     )
     caption = (
-        clean_http(d.find("p", {"class": "text-center"}).get_text(), newline=True)
+        get_link_or_title(d, tag="p", args={"class": "text-center"}, force=True)
         .strip()
         .replace("\u3000", " ")
     )
-    link = d.select_one(
-        "#showdata > div.col-md-4.col-md-offset-4 > a.btn.btn-primary.btn-sm.btn-block"
-    ).get("href")
+    link = get_link_or_title(
+        d, tag="a", args={"class": "btn btn-primary btn-sm btn-block"}, attr="href"
+    )
     return {"Status": True, "tweets": caption, "link": link}
     # base_url = "https://ssstwitter.com/"
     # d = get_bs4(rget(base_url, headers=HEADER_DEFAULT).text)
@@ -249,9 +259,9 @@ def instagram(query):
         parse_as="json",
     )["data"]
     bs4 = get_bs4(data)
-    thumb = bs4.find("img", {"alt": "saveig"}).get("src")
-    link = get_link_single(
-        bs4.find("div", {"class": "download-items__btn"}), "href", "a"
+    thumb = get_link_or_title(bs4, attr="src", tag="img", args={"alt": "saveig"})
+    link = get_link_or_title(
+        bs4.find("div", {"class": "download-items__btn"}), attr="href", tag="a"
     )
     return {"status": True, "thumb": thumb, "dl_link": link}
 
@@ -337,7 +347,9 @@ def pinterest(query):
         data=data,
         single=True,
     )
-    return get_link_single(response.select_one("#pvd_preview_img"), "src")
+    return get_link_or_title(
+        response, attr="src", tag="img", args={"id": "pvd_preview_img"}
+    )
 
 
 def snackvideo(query):
@@ -354,5 +366,5 @@ def snackvideo(query):
     dp = fix_url(query, quote_plus=True)
     d = rget(f"https://www.expertstool.com/d.php?url={dp}", headers=headers)
     b = get_bs4(d.text)
-    link = get_link_single(b.find("source"), "src")
+    link = get_link_or_title(b, attr="src", tag="source")
     return {"success": d.status_code, "vid_url": link}

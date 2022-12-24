@@ -13,7 +13,7 @@ from direct.update.apkmirror import grab, home
 from direct.update.apkpure import get_dl as apk_dl
 from direct.update.uptodown import get_dl as upget_dl
 from util.exceptions import FukUSeragent, GagalDikarenakan
-from util.html.parser import cleanurl, download_webpage, get_link_single, getfilehost
+from util.html.parser import cleanurl, download_webpage, get_link_or_title, getfilehost
 from util.utils import fix_link
 
 app = Flask(__name__)
@@ -190,8 +190,9 @@ def rom():
             links = []
             bs4 = download_webpage((query), parse_as="html")
             # to get guest token
-            base = bs4.find("a", {"class": "btn btn-yellow"})
-            first_link = get_link_single(base, "href")
+            first_link = get_link_or_title(
+                bs4, attr="href", tag="a", args={"class": "btn btn-yellow"}
+            )
             data = download_webpage(
                 f"https://{getfilehost(query, hostname=True)}{first_link}",
                 parse_as="html",
@@ -208,19 +209,15 @@ def rom():
                     return {"msg": f"file error because {warning}"}
             except IndexError:
                 # for get all url
-                title = (
-                    data.find("table", {"class": "details-table"})
-                    .find("td")
-                    .find_next("td")
-                    .get_text()
-                )
-                filesize = (
-                    data.find("table", {"class": "details-table"})
-                    .find("td")
-                    .find_next("td")
-                    .find_next("td")
-                    .find_next("td")
-                    .get_text()
+                title = get_link_or_title(
+                    data,
+                    tag="td",
+                    args={"class": "details-table"},
+                    multiple=True,
+                    force=True,
+                )[2]
+                filesize = get_link_or_title(
+                    data, tag="td", args={"class": "details-table"}, force=True
                 )
                 links.extend(
                     link["href"]

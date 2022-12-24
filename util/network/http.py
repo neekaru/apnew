@@ -43,7 +43,6 @@ def cf():
     )
     reqcq.headers.update(
         {
-            "User-Agent": uegen(default=True),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-us,en;q=0.6",
             "Sec-Fetch-Mode": "navigate",

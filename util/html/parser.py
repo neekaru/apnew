@@ -1,7 +1,7 @@
 import codecs
 import re
 import urllib.parse
-from typing import Any
+from typing import Any, List, Union
 
 import defusedxml
 from bs4 import BeautifulSoup
@@ -360,41 +360,69 @@ def extract_form_action(html: str) -> str:
     return match.group(1) if (match := re.search(pattern, html)) else ""
 
 
-def get_link_single(bs4: BeautifulSoup, attr: str, tag: str = None) -> str | None:
+def get_link_or_title(
+    bs4: BeautifulSoup,
+    attr: str = None,
+    tag: str = None,
+    css: str = None,
+    multiple: bool = False,
+    force: bool = False,
+    process=None,
+    *args,
+    **kwargs,
+) -> str | list[str] | dict[str, str]:
     """
-    Extracts the specified attribute from an HTML element.
+    Extracts the specified attribute or title from an HTML element or form.
 
     Args:
-        bs4: BeautifulSoup: a Beautiful Soup object representing an HTML element.
-        attr: str: the name of the attribute to extract.
+        bs4: BeautifulSoup: a Beautiful Soup object representing an HTML element or form.
+        attr: str: the name of the attribute to extract (optional).
         tag: str: the name of the HTML tag to search for (optional).
+        css: str: a CSS selector to search for (optional).
+        multiple: bool: indicates whether to extract attributes or titles from multiple elements (optional).
+        force: bool: indicates whether to extract the text from the entire element, ignoring tags (optional).
+        *args: Arguments passed to the `find` or `find_all` method of `bs4`.
+        **kwargs: Keyword arguments passed to the `find` or `find_all` method of `bs4`.
 
     Returns:
-        Union[str, None]: The value of the specified attribute of the first element with the specified tag that is found, if present. Returns None if no such element is found or if the attribute is not found.
+        Union[str, List[str], dict[str, str]]: The value of the specified attribute or title of the first element with the specified tag or matching the CSS selector that is found, if present. Returns a list of values if `multiple` is `True`. Returns a dictionary mapping form input names to their values if `bs4` is a form element. Returns None if no such element is found or if the attribute is not found.
     """
-    element = bs4.find(tag) if tag else bs4
-    return element.get(attr) if element else None
-
-
-def get_title(
-    bs4: BeautifulSoup, generic: bool = False, force: bool = False, *args, **kwargs
-) -> str:
-    """
-    Extracts the title from an HTML element.
-
-    Args:
-        bs4 (BeautifulSoup): a Beautiful Soup object representing an HTML element.
-        generic (bool, optional): Extracts the title using the "title" tag. Defaults to False.
-        force (bool, optional): Extracts the text from the entire element, ignoring tags. Defaults to False.
-        *args: Arguments passed to the `find` method of `bs4`.
-        **kwargs: Keyword arguments passed to the `find` method of `bs4`.
-
-    Returns:
-        str: The title of the element.
-    """
-    if generic:
-        return bs4.find("title").get_text()
-    elif force:
-        return bs4.get_text()
+    if tag == "form":
+        # Extract data from form element
+        element = bs4.find(tag, *args, **kwargs)
+        return extract_form_data(element)
     else:
-        return bs4.find(*args, **kwargs).get_text()
+        # Extract attribute or title from HTML element
+        if css:
+            if multiple:
+                elements = bs4.select(css)
+            else:
+                element = bs4.select_one(css)
+        else:
+            if multiple:
+                elements = bs4.find_all(tag, *args, **kwargs)
+            else:
+                element = bs4.find(tag, *args, **kwargs)
+
+        if multiple:
+            if attr:
+                data = [element.get(attr) for element in elements]
+            elif force:
+                data = [element.get_text() for element in elements]
+            else:
+                data = [
+                    element.find(*args, **kwargs).get_text() for element in elements
+                ]
+        else:
+            if element:
+                if attr:
+                    data = element.get(attr)
+                elif force:
+                    data = element.get_text()
+                else:
+                    data = element.find(*args, **kwargs).get_text()
+            else:
+                return None
+        if process:
+            data = process(data)
+        return data

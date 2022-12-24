@@ -8,7 +8,7 @@ from util.html.parser import (
     download_webpage_with_post,
     extract_form_data,
     fix_url,
-    get_link_single,
+    get_link_or_title,
     getfilehost,
 )
 from util.network.http import HEADER_DEFAULT, get_new_headers
@@ -60,21 +60,23 @@ class devuploads:
 
     def direct(self, query: str) -> str:
         dl = download_webpage(query, headers=HEADER_DEFAULT, parse_as="html")
-        form_first = dl.find("form", attrs={"id": "downloadpage"})
-        inputs_first = form_first.find_all("input", attrs={"type": "hidden"})
+        form_first = get_link_or_title(dl, tag="form", args={"id": "downloadpage"})
+        inputs_first = get_link_or_title(
+            form_first, tag="input", args={"type": "hidden"}, multiple=True
+        )
         form_data_first = {input["name"]: input["value"] for input in inputs_first}
         dl_ps = download_webpage_with_post(
             self.selected_url(step=True), headers=HEADER_DEFAULT, data=form_data_first
         )
-        form_secound = dl_ps.find("form", {"name": "F1"})
-        data_first = extract_form_data(form_secound)
+        form_secound = get_link_or_title(dl_ps, tag="form", args={"name": "F1"})
+        data_first = form_secound.values()
         response = download_webpage_with_post(
             form_secound["action"],
             headers=get_new_headers({"Referer": "https://dev.miuiflash.com/"}),
             data=data_first,
         )
-        form_third = response.find("form", {"id": "techyneed"})
-        data_second = extract_form_data(form_third)
+        form_third = get_link_or_title(response, tag="form", args={"id": "techyneed"})
+        data_second = form_third.values()
 
         # Call the linksucess function to generate the action URL
         action_url = self.selected_url(step=False)
@@ -99,8 +101,8 @@ def hxfile(url: str) -> str:
     test_post = download_webpage_with_post(
         url, headers=get_new_headers({"Referer": url}), data=data
     )
-    dl_link = get_link_single(
-        test_post.find("a", {"class": "btn btn-dow"}), attr="href"
+    dl_link = get_link_or_title(
+        test_post, tag="a", attr="href", args={"class": "btn btn-dow"}
     )
     return fix_url(dl_link, quote_fix=True)
 
@@ -185,7 +187,9 @@ def oxycloud(query: str) -> str:  # sourcery skip: use-getitem-for-re-match-grou
     By Nekaru
     """
     base = download_webpage(query, headers=HEADER_DEFAULT, parse_as="html")
-    base1 = get_link_single(base.find("a", {"class": "btn btn-primary btn-lg"}), "href")
+    base1 = get_link_or_title(
+        base, tag="a", args={"class": "btn btn-primary btn-lg"}, attr="href"
+    )
     headers = get_new_headers(
         additional_headers={
             "referer": query,

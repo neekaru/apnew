@@ -6,7 +6,9 @@ import re
 import requests
 from fake_useragent import UserAgent
 
-from .html.genua import GenerateMobileUseragent, GetRandomUserAgent
+from util.html.genua import GenerateMobileUseragent, GetRandomUserAgent
+
+from .html import parser
 
 
 def fix_link(url: str) -> str:
@@ -22,7 +24,7 @@ def fix_link(url: str) -> str:
     return requests.get(url).url
 
 
-def clean_http(captions: str, *, newline: bool | None = False) -> str:
+def clean_string(captions: str, *, newline: bool | None = False) -> str:
     """
     Removes HTTP and HTTPS links, newline characters, and tab characters from a string.
 
@@ -66,7 +68,7 @@ def uegen(
 
     if random:
         ua = UserAgent(
-            browsers=["firefox", "edge", "safari", "chrome"], use_external_data=True
+            browsers=["firefox", "edge", "safari", "chrome"], use_external_data=False
         )
         return ua.random
     elif alter:
@@ -96,7 +98,9 @@ def csrfget(
         Optional[str]: The CSRF token, or None if no token could be found.
     """
     if middleware:
-        return bs4.find("input", {"name": "csrfmiddlewaretoken"}).get("value")
+        return parser.get_link_or_title(
+            bs4, tag="input", attr="value", args={"name": "csrfmiddlewaretoken"}
+        )
     if csrf:
         return None
 
@@ -196,7 +200,7 @@ def detect_string_type(string: str) -> str | None:
     Returns:
         Union[str, None]: The type of the string, or None if the type could not be determined.
     """
-    if all(c in string.hexdigits for c in string):
+    if all(c.isdigit() for c in string):
         return "hex"
     elif len(string) in {32, 40, 56, 64, 96, 128}:
         return {
