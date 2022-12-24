@@ -61,7 +61,7 @@ class devuploads:
             "Referer": "https://devuploads.com/",
         }
 
-    def selected_url(step: bool = False) -> str:
+    def selected_url(self, step: bool = False) -> str:
         links = [
             "become-android-developer-complete-roadmap",
             "why-you-should-learn-web-development",
@@ -122,7 +122,7 @@ def sharezweb(
 
 
 # TODO Rename this here and in `sharezweb`
-def sharezweb_extractor(dl):
+def sharezweb_extractor(dl) -> dict:
     cover = dl["data"]["itemInfo"].get("cover", "")
     name = dl["data"]["itemInfo"].get("name", "")
     utime = dl["data"]["itemInfo"].get("utime", "")

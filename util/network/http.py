@@ -1,3 +1,4 @@
+from typing import Dict
 import cloudscraper
 import requests
 
@@ -11,6 +12,19 @@ HEADER_DEFAULT: dict = {
     "Accept-Language": "en-us,en;q=0.6",
     "Sec-Fetch-Mode": "navigate",
 }
+
+
+def get_new_headers(additional_headers: Dict[str, str]) -> Dict[str, str]:
+    """
+    Returns a dictionary of headers that includes the headers in `HEADER_DEFAULT` as well as the additional headers.
+
+    Args:
+        - additional_headers (Dict[str, str]): A dictionary of additional headers to be included in the returned dictionary.
+
+    Returns:
+        - Dict[str, str]: A dictionary of headers that includes the headers in `HEADER_DEFAULT` as well as the additional headers.
+    """
+    return {**HEADER_DEFAULT, **additional_headers}
 
 
 def cf():
