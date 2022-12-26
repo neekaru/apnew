@@ -366,7 +366,8 @@ def get_link_or_title(
     tag: str = None,
     css: str = None,
     multiple: bool = False,
-    force: bool = False,
+    raw: bool = False,
+    force_text: bool = False,
     process=None,
     *args,
     **kwargs,
@@ -380,7 +381,9 @@ def get_link_or_title(
         tag: str: the name of the HTML tag to search for (optional).
         css: str: a CSS selector to search for (optional).
         multiple: bool: indicates whether to extract attributes or titles from multiple elements (optional).
-        force: bool: indicates whether to extract the text from the entire element, ignoring tags (optional).
+        raw: bool: indicates whether to return the raw HTML or the text content of the element or elements (optional).
+        force_text: bool: indicates whether to force the extraction of the text content of the element or elements, regardless of the value of `raw` (optional).
+        process: Callable: a processing function to apply to the extracted data (optional).
         *args: Arguments passed to the `find` or `find_all` method of `bs4`.
         **kwargs: Keyword arguments passed to the `find` or `find_all` method of `bs4`.
 
@@ -405,22 +408,22 @@ def get_link_or_title(
                 element = bs4.find(tag, *args, **kwargs)
 
         if multiple:
-            if attr:
-                data = [element.get(attr) for element in elements]
-            elif force:
-                data = [element.get_text() for element in elements]
+            if raw and not force_text:
+                data = [str(element) for element in elements]
             else:
-                data = [
-                    element.find(*args, **kwargs).get_text() for element in elements
-                ]
+                if attr and not force_text:
+                    data = [element.get(attr) for element in elements]
+                else:
+                    data = [element.get_text() for element in elements]
         else:
             if element:
-                if attr:
-                    data = element.get(attr)
-                elif force:
-                    data = element.get_text()
+                if raw and not force_text:
+                    data = str(element)
                 else:
-                    data = element.find(*args, **kwargs).get_text()
+                    if attr and not force_text:
+                        data = element.get(attr)
+                    else:
+                        data = element.get_text()
             else:
                 return None
         if process:
