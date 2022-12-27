@@ -1,7 +1,7 @@
 import codecs
 import re
 import urllib.parse
-from typing import Any, List, Union
+from typing import Any
 
 import defusedxml
 from bs4 import BeautifulSoup
@@ -372,6 +372,7 @@ def get_link_or_title(
     *args,
     **kwargs,
 ) -> str | list[str] | dict[str, str]:
+    # sourcery skip: assign-if-exp, merge-else-if-into-elif
     """
     Extracts the specified attribute or title from an HTML element or form.
 

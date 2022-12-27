@@ -214,10 +214,10 @@ def rom():
                     tag="td",
                     args={"class": "details-table"},
                     multiple=True,
-                    force=True,
+                    force_text=True,
                 )[2]
                 filesize = get_link_or_title(
-                    data, tag="td", args={"class": "details-table"}, force=True
+                    data, tag="td", args={"class": "details-table"}, force_text=True
                 )
                 links.extend(
                     link["href"]

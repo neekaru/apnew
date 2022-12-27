@@ -52,10 +52,12 @@ def func_1(bs, arg1, arg2):
     dl_link = get_link_or_title(
         bs, attr="data-url", css=True, selector="#detail-download-button"
     )
-    size = get_link_or_title(bs, tag="p", attr=None, **{"class_": "size"}, force=True)
+    size = get_link_or_title(
+        bs, tag="p", attr=None, **{"class_": "size"}, force_text=True
+    )
     version = get_link_or_title(bs, css=True, selector=arg1)
     app_name = (
-        get_link_or_title(bs, tag="h1", args={"id": "detail-app-name"}, force=True)
+        get_link_or_title(bs, tag="h1", args={"id": "detail-app-name"}, force_text=True)
         .replace("\n", "")
         .rstrip()
     )

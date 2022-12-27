@@ -48,7 +48,7 @@ class helo:
 
     def result(self, url):
         d = download_webpage(url, headers=self.__headers, parse_as="html")
-        p = get_link_or_title(d, tag="script", multiple=True)[5]
+        p = get_link_or_title(d, tag="script", multiple=True, raw=True)[5]
         # this need to extract them
         d = self.parser_json_from_element(p)
         base_video = d["ArticleDetailInfo"]["share_download_video"]["cdn_url"]
@@ -173,7 +173,7 @@ def twitter(query):
         data=data,
     )
     caption = (
-        get_link_or_title(d, tag="p", args={"class": "text-center"}, force=True)
+        get_link_or_title(d, tag="p", args={"class": "text-center"}, force_text=True)
         .strip()
         .replace("\u3000", " ")
     )
@@ -237,9 +237,9 @@ def instagram(query):
     )
     d = get_bs4(d1.text)
     data = {
-        "__RequestVerificationToken": d.find(
-            "input", {"name": "__RequestVerificationToken"}
-        ).get("value"),
+        "__RequestVerificationToken": get_link_or_title(
+            d, tag="input", args={"name": "__RequestVerificationToken"}, attr="value"
+        ),
         "q": query,
         "t": "media",
     }

@@ -2,6 +2,7 @@ import re
 import secrets
 
 import PyBypass as direk_1
+from util.html.lib_js import jsunpack
 
 from util.html.parser import (
     download_webpage,
@@ -14,24 +15,47 @@ from util.html.parser import (
 from util.network.http import HEADER_DEFAULT, get_new_headers
 from util.utils import get_readable_size, uegen
 
-
 def direct_link(query: str) -> dict:
+    # Define a dictionary that maps domain names to functions
     url_handlers = {
         "oxy.cloud": oxycloud,
-        "eg.sharezweb.com": sharezweb,
-        "sharezweb.com": sharezweb,
-        "linkbox.to": sharezweb,
         "hxfile.co": hxfile,
         "devuploads.com": devuploads().direct,
+        "upstream.to": upstream
     }
 
-    handler_func = next(
-        (func for domain, func in url_handlers.items() if domain in query),
-        None,
-    )
+    # Define a list of regular expressions and corresponding handler functions
+    regex_handlers = [
+        # s(re.compile(r"stapadblockuser\.xyz|streamtape\.com|streamtape\.to|streamtape\.xyz"), streamtape),
+        (re.compile(r"eg\.sharezweb\.com|sharezweb\.com|linkbox\.to"), sharezweb),
+    ]
+
+    # Try to find a function in the url_handlers dictionary that matches the query
+    handler_func = url_handlers.get(query)
     if handler_func is not None:
-        return handler_func(query)
-    # No matching function was found, try using direk_1.bypass()
+        # A matching function was found, call it and return the result
+        try:
+            return handler_func(query)
+        except Exception as e:
+            return {
+                "status": False,
+                "msg": f"An error occurred while calling {handler_func.__name__}: {e}",
+            }
+
+    # If no match was found in the url_handlers dictionary, try the regex_handlers list
+    for pattern, handler_func in regex_handlers:
+        if pattern.search(query):
+            # A matching function was found, call it and return the result
+            try:
+                return handler_func(query)
+            except Exception as e:
+                return {
+                    "status": False,
+                    "msg": f"An error occurred while calling {handler_func.__name__}: {e}",
+                }
+
+    # If no match was found in either the url_handlers dictionary or the regex_handlers list,
+    # try using direk_1.bypass()
     try:
         d1 = direk_1.bypass(query)
         if "bypassed_url" in d1:
@@ -39,8 +63,16 @@ def direct_link(query: str) -> dict:
                 "status": True,
                 "dl_url": fix_url(d1["bypassed_url"], quote_fix=True),
             }
-    except Exception:
-        return {"Status": False, "msg": "your link is unsupported"}
+        else:
+            return {
+                "status": False,
+                "msg": "direk_1.bypass did not return a dictionary with a 'bypassed_url' key",
+            }
+    except Exception as e:
+        return {
+            "status": False,
+            "msg": f"An error occurred while calling direk_1.bypass: {e}",
+        }
 
 
 class devuploads:
@@ -59,10 +91,11 @@ class devuploads:
         return f"https://dev.miuiflash.com/{selected_link}"
 
     def direct(self, query: str) -> str:
+        # sourcery skip: inline-immediately-returned-variable, use-getitem-for-re-match-groups
         dl = download_webpage(query, headers=HEADER_DEFAULT, parse_as="html")
         form_first = get_link_or_title(dl, tag="form", args={"id": "downloadpage"})
         inputs_first = get_link_or_title(
-            form_first, tag="input", args={"type": "hidden"}, multiple=True
+            form_first, tag="input", args={"type": "hidden"}, multiple=True, raw=True
         )
         form_data_first = {input["name"]: input["value"] for input in inputs_first}
         dl_ps = download_webpage_with_post(
@@ -88,6 +121,27 @@ class devuploads:
         dl_link = re.search(r'window\.location\s*=\s*"([^"]*)"', str(final)).group(1)
         return dl_link
 
+def upstream(url: str) -> str:
+    """
+    Upstream Direct Generator
+    By Nekaru
+    """
+    d = download_webpage(url, headers=HEADER_DEFAULT, parse_as="html")
+    script = get_link_or_title(d, tag="script", raw=True, multiple=True)[17]
+    # # since the web using packerjs
+    result = jsunpack.unpack(str(script))
+    pattern = re.compile(r'file:\s*"([^"]+)"')
+    match = pattern.search(result)
+
+    if match:
+        # Extract the value of the "file" attribute
+        file_url = match.group(1)
+
+        # Check if the URL starts with "https://s97.upstreamcdn.co"
+        if not file_url.startswith('https://s97.upstreamcdn.co'):
+            # Prepend "https://s97.upstreamcdn.co" to the URL
+            file_url = 'https://s97.upstreamcdn.co' + file_url
+        return file_url
 
 def hxfile(url: str) -> str:
     """
