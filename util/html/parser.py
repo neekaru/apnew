@@ -28,31 +28,32 @@ def get_bs4(url: str) -> BeautifulSoup | None:
 
 
 def download_webpage_with_post(
-    url: str,
+    url: str = None,
+    headers: dict[str, str] = None,
     cf: bool = False,
     single: bool = False,
-    parse_as: str = "html",
-    headers: dict[str, str] = None,
     data: dict[str, Any] = None,
+    response_option: str = "Normal",
+    parse_as: str = "html",
     *args,
     **kwargs,
 ) -> BeautifulSoup | str | dict[str, Any]:
-    # sourcery skip: raise-specific-error
     """
     Downloads and optionally parses the response of a webpage using a POST request.
 
     Parameters:
-        url (str): The URL of the webpage to download.
+        url (str): The URL of the webpage to download. If not provided, the URL will be taken from the `headers` argument.
+        headers (Dict[str, str]): A dictionary of HTTP headers to send with the request. If not provided, the `url` argument will be used as the URL.
         cf (bool): A flag indicating whether to use the cloudscraper on requests.post() function which can handles Cloudflare protection.
-        single (bool): A flag if you want use single requests not session
-        parse_as (str): A string indicating how to parse the response. Can be "html", "text", "Nothing" or "json".
-        headers (Dict[str, str]): A dictionary of HTTP headers to send with the request.
+        single (bool): A flag if you want use single requests not session.
         data (Dict[str, Any]): A dictionary of data to send in the body of the request.
+        response_option (str): A flag indicating what to return from the function. Can be "Normal" (the parsed response), "url", or "headers". If not provided, the function will return the parsed response based on the value of the `parse_as` argument.
+        parse_as (str): A string indicating how to parse the response. Can be "html", "text", "Nothing" or "json". If not provided, the function will return the parsed response based on the value of the `response_option` argument.
         *args: Additional positional arguments to pass to the requests.post() or cf() function.
         **kwargs: Additional keyword arguments to pass to the requests.post() or cf() function.
 
     Returns:
-        BeautifulSoup, str, or Dict[str, Any]: A BeautifulSoup object containing the parsed HTML of the webpage, the raw response text as a string, or the response JSON data as a dictionary, depending on the value of `parse_as`.
+        Union[BeautifulSoup, str, dict[str, Any]]: A BeautifulSoup object containing the parsed HTML of the webpage, the raw response text as a string, or the response JSON data as a dictionary, depending on the value of `parse_as`.
 
     Raises:
         Exception: If the request to the webpage fails.
@@ -69,40 +70,58 @@ def download_webpage_with_post(
             f"Request to {url} failed with status code {response.status_code}"
         )
 
-    if parse_as == "html":
-        return BeautifulSoup(response.text, "html.parser")
-    elif parse_as == "json":
-        return response.json()
-    elif parse_as == "text":
-        return response.text
-    elif parse_as == "Nothing":
+    # If the response_option argument is provided, return the appropriate value
+    if response_option:
+        if response_option == "Normal":
+            if parse_as:
+                if parse_as == "html":
+                    return BeautifulSoup(response.text, "html.parser")
+                elif parse_as == "json":
+                    return response.json()
+                elif parse_as == "text":
+                    return response.text
+        elif response_option == "headers":
+            return response.headers
+        elif response_option == "url":
+            return response.url
+        else:
+            return response
+    elif parse_as:
+        if parse_as == "html":
+            return BeautifulSoup(response.text, "html.parser")
+        elif parse_as == "json":
+            return response.json()
+        elif parse_as == "text":
+            return response.text
+    else:
         return response
 
 
 def download_webpage(
-    url: str,
+    url: str = None,
+    headers: dict[str, str] = None,
     cf: bool = False,
     single: bool = False,
+    response_option: str = "Normal",
     parse_as: str = "html",
-    headers: dict[str, str] = None,
     *args,
     **kwargs,
-) -> BeautifulSoup | str:
-    # sourcery skip: raise-specific-error
+) -> BeautifulSoup | str | dict[str, str]:
     """
     Downloads and parses the HTML of a webpage.
 
     Parameters:
-        url (str): The URL of the webpage to download.
+        url (str): The URL of the webpage to download. If not provided, the URL will be taken from the `headers` argument.
+        headers (Dict[str, str]): A dictionary of HTTP headers to send with the request. If not provided, the `url` argument will be used as the URL.
         cf (bool): A flag indicating whether to use the cloudscraper on requests.get() function which can handles Cloudflare protection.
-        single (bool): A flag if you want use single requests not session
-        parse_as (str): A string indicating how to parse the response. Can be "html", "text", "Nothing" or "json".
-        headers (Dict[str, str]): A dictionary of HTTP headers to send with the request.
+        single (bool): A flag if you want use single requests not session.
+        response_option (str): A flag indicating what to return from the function. Can be "Normal" (the parsed response), "url", or "headers". If not provided, the function will return the parsed response based on the value of the `parse_as` argument.
+        parse_as (str): A string indicating how to parse the response. Can be "html", "text", "Nothing" or "json". If not provided, the function will return the parsed response based on the value of the `response_option` argument.
         *args: Additional positional arguments to pass to the requests.get() or cf() function.
         **kwargs: Additional keyword arguments to pass to the requests.get() or cf() function.
 
     Returns:
-        BeautifulSoup: A BeautifulSoup object containing the parsed HTML of the webpage.
+        Union[BeautifulSoup, str, dict[str, str]]: The parsed response, URL, or headers of the webpage, depending on the value of the `response_option` or `parse_as` argument.
 
     Raises:
         Exception: If the request to the webpage fails.
@@ -119,13 +138,30 @@ def download_webpage(
             f"Request to {url} failed with status code {response.status_code}"
         )
 
-    if parse_as == "html":
-        return BeautifulSoup(response.text, "html.parser")
-    elif parse_as == "json":
-        return response.json()
-    elif parse_as == "text":
-        return response.text
-    elif parse_as == "Nothing":
+    # If the response_option argument is provided, return the appropriate value
+    if response_option:
+        if response_option == "Normal":
+            if parse_as:
+                if parse_as == "html":
+                    return BeautifulSoup(response.text, "html.parser")
+                elif parse_as == "json":
+                    return response.json()
+                elif parse_as == "text":
+                    return response.text
+        elif response_option == "headers":
+            return response.headers
+        elif response_option == "url":
+            return response.url
+        else:
+            return response
+    elif parse_as:
+        if parse_as == "html":
+            return BeautifulSoup(response.text, "html.parser")
+        elif parse_as == "json":
+            return response.json()
+        elif parse_as == "text":
+            return response.text
+    else:
         return response
 
 

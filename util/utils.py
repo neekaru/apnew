@@ -1,6 +1,7 @@
 import base64
 import contextlib
 import datetime
+import binascii
 import re
 
 import requests
@@ -217,3 +218,24 @@ def detect_string_type(string: str) -> str | None:
             base64.b64decode(string)
             return "base64"
     return None
+
+def decode_string(encoded_string: str, encoding: str) -> str:
+    """
+    Decodes the given encoded string using the specified encoding.
+    
+    Parameters:
+        encoded_string (str): The encoded string to decode.
+        encoding (str): The encoding method to use for decoding. Supported values are:
+            - "utf-8" (default): Decodes the string using the UTF-8 encoding.
+            - "base64": Decodes the string using the base64 encoding.
+            - "hex": Decodes the string using the hexadecimal encoding.
+            
+    Returns:
+        str: The decoded string.
+    """
+    if encoding == "base64":
+        return base64.b64decode(encoded_string).decode("utf-8")
+    elif encoding == "hex":
+        return binascii.unhexlify(encoded_string).decode("utf-8")
+    else:
+        return encoded_string.decode(encoding)

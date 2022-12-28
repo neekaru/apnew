@@ -2,8 +2,8 @@ import re
 import secrets
 
 import PyBypass as direk_1
-from util.html.lib_js import jsunpack
 
+from util.html.lib_js import jsunpack
 from util.html.parser import (
     download_webpage,
     download_webpage_with_post,
@@ -13,7 +13,8 @@ from util.html.parser import (
     getfilehost,
 )
 from util.network.http import HEADER_DEFAULT, get_new_headers
-from util.utils import get_readable_size, uegen
+from util.utils import decode_string, get_readable_size, uegen
+
 
 def direct_link(query: str) -> dict:
     # Define a dictionary that maps domain names to functions
@@ -21,7 +22,8 @@ def direct_link(query: str) -> dict:
         "oxy.cloud": oxycloud,
         "hxfile.co": hxfile,
         "devuploads.com": devuploads().direct,
-        "upstream.to": upstream
+        "upstream.to": upstream,
+        "hexupload.net": hexupload
     }
 
     # Define a list of regular expressions and corresponding handler functions
@@ -121,7 +123,8 @@ class devuploads:
         dl_link = re.search(r'window\.location\s*=\s*"([^"]*)"', str(final)).group(1)
         return dl_link
 
-def upstream(url: str) -> str:
+
+def upstream(url: str) -> str:    # sourcery skip: use-fstring-for-concatenation, use-getitem-for-re-match-groups
     """
     Upstream Direct Generator
     By Nekaru
@@ -131,17 +134,32 @@ def upstream(url: str) -> str:
     # # since the web using packerjs
     result = jsunpack.unpack(str(script))
     pattern = re.compile(r'file:\s*"([^"]+)"')
-    match = pattern.search(result)
-
-    if match:
+    if match := pattern.search(result):
         # Extract the value of the "file" attribute
         file_url = match.group(1)
 
         # Check if the URL starts with "https://s97.upstreamcdn.co"
-        if not file_url.startswith('https://s97.upstreamcdn.co'):
+        if not file_url.startswith("https://s97.upstreamcdn.co"):
             # Prepend "https://s97.upstreamcdn.co" to the URL
-            file_url = 'https://s97.upstreamcdn.co' + file_url
+            file_url = "https://s97.upstreamcdn.co" + file_url
         return file_url
+
+def hexupload(url: str) -> str:  # sourcery skip: use-getitem-for-re-match-groups
+    # HexUpload Direct Generator
+    # Ported By Neekaru
+    # rework from this https://github.com/Gujal00/ResolveURL/commit/e019b1fa7c27e64e801ccd9aa560235caa0cde29
+    d = download_webpage(url, headers=HEADER_DEFAULT, parse_as="html")
+    if b4buy := re.search('b4aa\.buy\("([^"]+)', str(d)):
+        return decode_string(b4buy.group(1), "base64").replace(' ', '%20')
+
+    payload = get_link_or_title(d, tag="form", raw=True)
+    payload.update({'dataType': 'json', 'ajax': '1'})
+    pos = download_webpage_with_post("https://hexupload.net", data=payload, headers=HEADER_DEFAULT, response_option="headers")
+    js = download_webpage_with_post("https://hexupload.net", data=payload, headers=HEADER_DEFAULT, parse_as="json")
+    if 'text/html' not in pos['Content-Type']:
+        if url := js["link"]:
+            url = decode_string(url, "base64")
+            return url.replace(' ', '%20')
 
 def hxfile(url: str) -> str:
     """

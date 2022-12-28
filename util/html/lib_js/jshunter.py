@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import re
 
 _0xce1e = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"
@@ -59,12 +58,12 @@ def unpack_js(code: str) -> str:
         # Extract the arguments for the hunter function from the code
         regex = r"\(\"([^)]+)\)"
         matches = re.findall(regex, code, re.MULTILINE)[0]
-        code_list = matches.split(',')
+        code_list = matches.split(",")
         for idx, code in enumerate(code_list):
-            code_list[idx] = int(code) if code.isdigit() else code.replace('\"', '')
+            code_list[idx] = int(code) if code.isdigit() else code.replace('"', "")
         # Call the hunter function with the extracted arguments
         result = hunter(*code_list)
         return result
-    except Exception as e:
+    except Exception:
         log_error()
     return None
