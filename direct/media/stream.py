@@ -11,7 +11,7 @@ from util.html.parser import (
     get_bs4,
     get_link_or_title,
 )
-from util.network.cookie import fix_cookie, get_cookie
+from util.network.cookie import Cookie, Request
 from util.network.http import HEADER_DEFAULT, rget, starter
 from util.utils import get_readable_size, get_readable_time, uegen
 
@@ -245,7 +245,7 @@ def instagram(query):
     }
     headers = {
         "referer": "https://saveig.app/en/instagram-video-downloader",
-        "cookie": fix_cookie(get_cookie(d1, match=0), default=True),
+        "cookie": Cookie(Request(d1).get_cookie(match=0)).clean(),
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "content-length": "248",
         "x-requested-with": "XMLHttpRequest",

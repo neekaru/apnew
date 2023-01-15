@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Tuple, Union
 
 from util.html.parser import fix_url
 

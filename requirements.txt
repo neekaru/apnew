@@ -7,4 +7,6 @@ get-useragents
 https://github.com/google/brotli/archive/refs/heads/master.zip
 PyBypass
 requests
+humanize
 w3lib
+https://github.com/mansuf/zippyshare-downloader/archive/refs/heads/main.zip

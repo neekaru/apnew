@@ -1,6 +1,5 @@
 import re
 import secrets
-from typing import Dict, Union
 
 from util.html.lib_js import jsunpack
 from util.html.parser import (
@@ -12,8 +11,9 @@ from util.html.parser import (
     get_link_or_title,
     getfilehost,
 )
+from zippyshare_downloader import extract_info
 from util.network.http import HEADER_DEFAULT, get_new_headers
-from util.utils import decode_string, get_readable_size, uegen
+from util.utils import decode_string, fix_link, get_readable_size, uegen
 
 
 def direct_link(query: str) -> str | dict[str, str]:
@@ -23,7 +23,9 @@ def direct_link(query: str) -> str | dict[str, str]:
         "hexupload.net": hexupload,
         "devuploads.com": lambda: devuploads().direct(query),
         "upstream.to": upstream,
-        "eg\.sharezweb\.com|sharezweb\. com|linkbox\.to": sharezweb,
+        "uppit.com": uppit,
+        "zippyshare.com": zippyshare,
+        "eg\.sharezweb\.com|sharezweb\.com|linkbox\.to": sharezweb,
     }
 
     # Use a regular expression to match the domain name
@@ -117,6 +119,24 @@ def hxfile(url: str) -> str:
     dl_link = extract_data_regex(dl_link_1, preset="a_href", group=1)
     return dl_link
 
+def uppit(url: str) -> str:
+    """
+    Just Uppit
+    """
+    ds =  download_webpage(url, headers=HEADER_DEFAULT)
+    data = get_link_or_title(ds, tag="form")
+    d = download_webpage_with_post(url, headers=HEADER_DEFAULT, data=data)
+    return get_link_or_title(d, tag="a", attr="href", multiple=True)[4].replace(" ", "%20")
+
+def zippyshare(url: str) -> str:
+    """
+    Just zippyshare test
+    """
+    if "/d" in url:
+        url = fix_link(url)
+        return extract_info(url, download=False).download_url
+    else:
+        return extract_info(url, download=False).download_url
 
 def fembed(url: str) -> dict:  # sourcery skip: use-getitem-for-re-match-groups
     url = url.replace("/v/", "/f/")
