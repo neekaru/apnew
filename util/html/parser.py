@@ -1,7 +1,11 @@
 import codecs
+import json
 import re
-import urllib.parse
-from typing import Any
+from typing import Any, Callable, List, Union
+from urllib.parse import quote as quot
+from urllib.parse import quote_plus as quot_plus
+from urllib.parse import unquote as unquot
+from urllib.parse import urlparse
 
 import defusedxml
 from bs4 import BeautifulSoup
@@ -177,10 +181,11 @@ def getfilehost(url: str, hostname: bool = False) -> str:
     Returns:
         str: The file host or hostname of the URL.
     """
+    parsed_url = urlparse(url)
     if hostname:
-        return url.strip("/ ").split("/")[2]
+        return parsed_url.hostname
     else:
-        return url.strip("/ ").split("/")[-1]
+        return parsed_url.path.strip("/ ").split("/")[-1]
 
 
 def cleanurl(url: str, *args, **kwargs) -> str:
@@ -279,22 +284,16 @@ def fix_annoy(
     unicode_escape: bool | None = None,
     weird_unicode_remover: bool | None = None,
 ) -> str:
-    """Fix annoying parts of a string.
+    """
+    Fixes annoying parts of a string.
 
-    This function is intended for fixing some annoying parts of a string, such as double newlines, double spaces, and
-    specified substrings.
-
-    Args:
-        bs4 (str): The input string to be modified.
-        double_newline (bool, optional): If True, fix double newlines in the input string (e.g. "a\n\n text \n b").
-                                         Defaults to False.
-        double_space (bool, optional): If True, fix double spaces in the input string (e.g. "  a "). Defaults to False.
-        remove_part (str, optional): A substring to remove from the input using a regular expression pattern.
-                                     Defaults to None.
-        unicode_escape (bool, optional): If True, decode the input string using the "unicode_escape" codec.
-                                         Defaults to None.
-        weird_unicode_remover (bool, optional): If True, remove non-ASCII characters from the input string.
-                                                 Defaults to None.
+    Parameters:
+    -   string (str): The input string to be modified.
+    -   fix_double_newlines (bool): If True, fix double newlines in the input string (e.g. "a   text  b"), Defaults to False.
+    -   fix_double_spaces (bool): If True, fix double spaces in the input string (e.g. " a "), Defaults to False.
+    -   remove_substring (str): A substring to remove from the input using a regular expression pattern, Defaults to None.
+    -   decode_unicode (bool): If True, decode the input string using the "unicode_escape" codec, Defaults to None.
+    -   remove_weird_unicode (bool): If True, remove non-ASCII characters from the input string, Defaults to None.
 
     Returns:
         str: The modified input string.
@@ -337,13 +336,13 @@ def fix_url(
         Union[str, None]: The fixed URL, or None if the URL is invalid.
     """
     if quote_fix:
-        return urllib.parse.quote(url, safe="/:")
+        return quot(str(url), safe="/:")
     elif unquote:
-        return urllib.parse.unquote(url)
+        return unquot(url)
     elif quote_plus:
-        return urllib.parse.quote_plus(url)
+        return quot_plus(url)
     elif quote:
-        return urllib.parse.quote(url)
+        return quot(url)
     elif clean:
         return url.replace("\\", "")
     else:
@@ -381,19 +380,58 @@ def extract_form_data(form) -> dict[str, str]:
         data[name] = value
     return data
 
-
-def extract_form_action(html: str) -> str:
+def extract_json_data(json_data: dict, keys: list) -> dict:
     """
-    Extracts the action attribute from a form element in an HTML string.
+    Extracts data from a JSON object using a list of keys.
+
+    Args:
+        json_data (dict): The JSON object.
+        keys (list): The keys to extract.
+
+    Returns:
+        dict: A dictionary containing the extracted data.
+    """
+    extracted_data = {}
+    for key in keys:
+        if key in json_data and json_data[key] not in (None, ""):
+            extracted_data[key] = json_data[key]
+    return extracted_data
+
+def js_to_json(js: str) -> dict:
+    # Find the JSON object in the JavaScript string using a regular expression
+    match = re.search(r'\{.*\}', js)
+    if match:
+        # Extract the JSON object and parse it into a Python dictionary
+        json_str = match.group(0)
+        return json.loads(json_str)
+    else:
+        return {}
+    
+
+def extract_data_regex(
+    html: str, preset: str = None, pattern: str = None, group: int = 0
+) -> str:
+    """
+    Extracts data from an HTML string using a regular expression.
 
     Args:
         html (str): The HTML string.
+        preset (str): The name of a preset regular expression pattern to use (optional).
+        pattern (str): A custom regular expression pattern to use (optional).
+        group (int): The group number to extract (optional).
 
     Returns:
-        str: The value of the action attribute.
+        str: The data that matches the regular expression pattern. Returns an empty string if no match is found.
     """
-    pattern = r'<form.*?action="(.*?)".*?>'
-    return match.group(1) if (match := re.search(pattern, html)) else ""
+    if preset == "form_action":
+        pattern = r'<form.*?action="(.*?)".*?>'
+    elif preset == "a_href":
+        pattern = r'<a.*?href="(.*?)".*?>'
+    elif pattern is None:
+        raise ValueError("Either a preset or a custom pattern must be specified.")
+
+    match = re.search(pattern, html)
+    return match.group(group) if match else ""
 
 
 def get_link_or_title(
@@ -410,29 +448,27 @@ def get_link_or_title(
 ) -> str | list[str] | dict[str, str]:
     # sourcery skip: assign-if-exp, merge-else-if-into-elif
     """
-    Extracts the specified attribute or title from an HTML element or form.
+    Extracts specified data from an HTML element or form.
 
-    Args:
-        bs4: BeautifulSoup: a Beautiful Soup object representing an HTML element or form.
-        attr: str: the name of the attribute to extract (optional).
-        tag: str: the name of the HTML tag to search for (optional).
-        css: str: a CSS selector to search for (optional).
-        multiple: bool: indicates whether to extract attributes or titles from multiple elements (optional).
-        raw: bool: indicates whether to return the raw HTML or the text content of the element or elements (optional).
-        force_text: bool: indicates whether to force the extraction of the text content of the element or elements, regardless of the value of `raw` (optional).
-        process: Callable: a processing function to apply to the extracted data (optional).
-        *args: Arguments passed to the `find` or `find_all` method of `bs4`.
-        **kwargs: Keyword arguments passed to the `find` or `find_all` method of `bs4`.
+    Parameters:
+        element (bs4.BeautifulSoup): A Beautiful Soup object representing an HTML element or form.
+        data_type (str): The name of the data to extract (optional). Can be "attribute" or "title".
+        tag (str): The name of the HTML tag to search for (optional).
+        css (str): A CSS selector to search for (optional).
+        multiple (bool): Indicates whether to extract data from multiple elements (optional).
+        raw (bool): Indicates whether to return the raw HTML or the text content of the element or elements (optional).
+        force_text (bool): Indicates whether to force the extraction of the text content of the element or elements, regardless of the value of raw (optional).
+        process (Callable): A processing function to apply to the extracted data (optional).
+        *args: Arguments passed to the find or find_all method of element.
+        **kwargs: Keyword arguments passed to the find or find_all method of element.
 
     Returns:
-        Union[str, List[str], dict[str, str]]: The value of the specified attribute or title of the first element with the specified tag or matching the CSS selector that is found, if present. Returns a list of values if `multiple` is `True`. Returns a dictionary mapping form input names to their values if `bs4` is a form element. Returns None if no such element is found or if the attribute is not found.
+    Union[str, List[str], dict[str, str]]: The value of the specified data of the first element with the specified tag or matching the CSS selector that is found, if present. Returns a list of values if multiple is True. Returns a dictionary mapping form input names to their values if element is a form element. Returns None if no such element is found or if the data is not found.
     """
     if tag == "form":
-        # Extract data from form element
         element = bs4.find(tag, *args, **kwargs)
         return extract_form_data(element)
     else:
-        # Extract attribute or title from HTML element
         if css:
             if multiple:
                 elements = bs4.select(css)
@@ -466,3 +502,4 @@ def get_link_or_title(
         if process:
             data = process(data)
         return data
+

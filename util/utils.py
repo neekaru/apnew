@@ -1,8 +1,9 @@
 import base64
+import binascii
 import contextlib
 import datetime
-import binascii
 import re
+import humanize
 
 import requests
 from fake_useragent import UserAgent
@@ -105,7 +106,6 @@ def csrfget(
     if csrf:
         return None
 
-
 def get_readable_time(
     seconds: int | float, unix_epoch: bool = False, utc: bool = False
 ) -> str:
@@ -126,43 +126,19 @@ def get_readable_time(
     if unix_epoch:
         # If the unix_epoch argument is set to True, we need to convert the given seconds value to the equivalent
         # time based on the Unix epoch.
-        time = datetime.datetime.fromtimestamp(seconds)
+        return humanize.naturaltime(datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc if utc else None))
     else:
         # If the unix_epoch argument is not set, we can use the given seconds value to create a datetime object
         # representing the current date and time, and then subtract or add the number of seconds from/to it to get the
         # desired time.
         if seconds < 0:
             # If the seconds value is negative, subtract the number of seconds from the current date and time.
-            time = datetime.datetime.now() - datetime.timedelta(seconds=abs(seconds))
+            time = datetime.datetime.now(tz=datetime.timezone.utc if utc else None) - datetime.timedelta(seconds=abs(seconds))
         else:
             # If the seconds value is positive, add the number of seconds to the current date and time.
-            time = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
+            time = datetime.datetime.now(tz=datetime.timezone.utc if utc else None) + datetime.timedelta(seconds=seconds)
 
-    if utc:
-        # If the utc argument is set to True, we need to convert the calculated time to the equivalent time in the
-        # Coordinated Universal Time (UTC) time zone.
-        time = time - datetime.timedelta(hours=time.hour)
-
-    # Calculate the number of days by dividing the total number of seconds by the number of seconds in a day.
-    day = abs(seconds) // 86400
-
-    # Extract the number of hours, minutes and seconds from the calculated time and format them into a
-    # human-readable string.
-    hour = (abs(seconds) // 3600) % 24
-    minute = (abs(seconds) // 60) % 60
-    second = abs(seconds) % 60
-
-    result = ""
-    if day != 0:
-        result += f"{day}d "
-    if hour != 0:
-        result += f"{hour}h "
-    if minute != 0:
-        result += f"{minute}m "
-    if second != 0:
-        result += f"{second}s"
-
-    return result
+        return humanize.naturaltime(time)
 
 
 def get_readable_size(size: int) -> str | None:
@@ -219,17 +195,18 @@ def detect_string_type(string: str) -> str | None:
             return "base64"
     return None
 
+
 def decode_string(encoded_string: str, encoding: str) -> str:
     """
     Decodes the given encoded string using the specified encoding.
-    
+
     Parameters:
         encoded_string (str): The encoded string to decode.
         encoding (str): The encoding method to use for decoding. Supported values are:
             - "utf-8" (default): Decodes the string using the UTF-8 encoding.
             - "base64": Decodes the string using the base64 encoding.
             - "hex": Decodes the string using the hexadecimal encoding.
-            
+
     Returns:
         str: The decoded string.
     """

@@ -1,14 +1,14 @@
 import re
 import secrets
-
-import PyBypass as direk_1
+from typing import Dict, Union
 
 from util.html.lib_js import jsunpack
 from util.html.parser import (
     download_webpage,
     download_webpage_with_post,
+    extract_data_regex,
     extract_form_data,
-    fix_url,
+    extract_json_data,
     get_link_or_title,
     getfilehost,
 )
@@ -16,65 +16,28 @@ from util.network.http import HEADER_DEFAULT, get_new_headers
 from util.utils import decode_string, get_readable_size, uegen
 
 
-def direct_link(query: str) -> dict:
+def direct_link(query: str) -> str | dict[str, str]:
     # Define a dictionary that maps domain names to functions
-    url_handlers = {
-        "oxy.cloud": oxycloud,
+    domain_to_function = {
         "hxfile.co": hxfile,
-        "devuploads.com": devuploads().direct,
+        "hexupload.net": hexupload,
+        "devuploads.com": lambda: devuploads().direct(query),
         "upstream.to": upstream,
-        "hexupload.net": hexupload
+        "eg\.sharezweb\.com|sharezweb\. com|linkbox\.to": sharezweb,
     }
 
-    # Define a list of regular expressions and corresponding handler functions
-    regex_handlers = [
-        # s(re.compile(r"stapadblockuser\.xyz|streamtape\.com|streamtape\.to|streamtape\.xyz"), streamtape),
-        (re.compile(r"eg\.sharezweb\.com|sharezweb\.com|linkbox\.to"), sharezweb),
-    ]
-
-    # Try to find a function in the url_handlers dictionary that matches the query
-    handler_func = url_handlers.get(query)
-    if handler_func is not None:
-        # A matching function was found, call it and return the result
+    # Use a regular expression to match the domain name
+    domain_regex = re.compile(r"|".join(domain_to_function.keys()))
+    domain_match = domain_regex.search(query)
+    if domain_match:
         try:
-            return handler_func(query)
+            return domain_to_function[domain_match.group()](query)
         except Exception as e:
             return {
-                "status": False,
-                "msg": f"An error occurred while calling {handler_func.__name__}: {e}",
+                "msg": f"Error occurred while generating direct link for {query}: {e}"
             }
-
-    # If no match was found in the url_handlers dictionary, try the regex_handlers list
-    for pattern, handler_func in regex_handlers:
-        if pattern.search(query):
-            # A matching function was found, call it and return the result
-            try:
-                return handler_func(query)
-            except Exception as e:
-                return {
-                    "status": False,
-                    "msg": f"An error occurred while calling {handler_func.__name__}: {e}",
-                }
-
-    # If no match was found in either the url_handlers dictionary or the regex_handlers list,
-    # try using direk_1.bypass()
-    try:
-        d1 = direk_1.bypass(query)
-        if "bypassed_url" in d1:
-            return {
-                "status": True,
-                "dl_url": fix_url(d1["bypassed_url"], quote_fix=True),
-            }
-        else:
-            return {
-                "status": False,
-                "msg": "direk_1.bypass did not return a dictionary with a 'bypassed_url' key",
-            }
-    except Exception as e:
-        return {
-            "status": False,
-            "msg": f"An error occurred while calling direk_1.bypass: {e}",
-        }
+    else:
+        return {"msg": f"Invalid domain name encountered: {query}"}
 
 
 class devuploads:
@@ -124,7 +87,53 @@ class devuploads:
         return dl_link
 
 
-def upstream(url: str) -> str:    # sourcery skip: use-fstring-for-concatenation, use-getitem-for-re-match-groups
+def streamhide(url: str) -> str:
+    """
+    StreamHide Extractor Generator
+    By Neekaru
+    """
+    d = download_webpage(url, headers=HEADER_DEFAULT)
+    script = get_link_or_title(d, tag="script", raw=True, multiple=True)[19]
+    pattern = re.compile(r'file:\s*"([^"]+)"')
+    if match := pattern.search(script):
+        # Extract the value of the "file" attribute
+        file_url = match.group(1)
+        return file_url
+
+
+def hxfile(url: str) -> str:
+    """
+    Hxfile Direct Generator
+    Rewrite By Nekaru From PyBypasser and lk21
+    """
+    d = download_webpage(url, headers=HEADER_DEFAULT)
+    # get the form
+    search_form = d.find("form", {"name": "F1"})
+    data = extract_form_data(search_form)
+    test_post = download_webpage_with_post(
+        url, headers=get_new_headers({"Referer": url}), data=data
+    )
+    dl_link_1 = get_link_or_title(test_post, css=".btn.btn-dow", raw=True)
+    dl_link = extract_data_regex(dl_link_1, preset="a_href", group=1)
+    return dl_link
+
+
+def fembed(url: str) -> dict:  # sourcery skip: use-getitem-for-re-match-groups
+    url = url.replace("/v/", "/f/")
+    domain = getfilehost(url, hostname=True)
+    down = download_webpage(url, headers=HEADER_DEFAULT, parse_as="html")
+    api_link = re.search(r"(/api/source/[^\"']+)", str(down)).group(1)
+    return download_webpage_with_post(
+        f"https://{domain}{api_link}",
+        headers=get_new_headers(additional_headers={"Referer": url}),
+        data={"r": url, "d": domain},
+        parse_as="json",
+    )["data"]
+
+
+def upstream(
+    url: str,
+) -> str:  # sourcery skip: use-fstring-for-concatenation, use-getitem-for-re-match-groups
     """
     Upstream Direct Generator
     By Nekaru
@@ -144,28 +153,64 @@ def upstream(url: str) -> str:    # sourcery skip: use-fstring-for-concatenation
             file_url = "https://s97.upstreamcdn.co" + file_url
         return file_url
 
-def hexupload(url: str) -> str:  # sourcery skip: use-getitem-for-re-match-groups
+
+def hexupload(
+    url: str,
+):  # sourcery skip: use-getitem-for-re-match-groups, use-named-expression
     # HexUpload Direct Generator
     # Ported By Neekaru
     # rework from this https://github.com/Gujal00/ResolveURL/commit/e019b1fa7c27e64e801ccd9aa560235caa0cde29
-    d = download_webpage(url, headers=HEADER_DEFAULT, parse_as="html")
-    if b4buy := re.search('b4aa\.buy\("([^"]+)', str(d)):
-        return decode_string(b4buy.group(1), "base64").replace(' ', '%20')
+    try:
+        d = download_webpage(url, headers=HEADER_DEFAULT, parse_as="html")
+        b4buy = re.search(r'b4aa\.buy\("([^"]+)', str(d))
+        if b4buy:
+            return decode_string(b4buy.group(1), "base64").replace(" ", "%20")
+    except:
+        pass
 
-    payload = get_link_or_title(d, tag="form", raw=True)
-    payload.update({'dataType': 'json', 'ajax': '1'})
-    pos = download_webpage_with_post("https://hexupload.net", data=payload, headers=HEADER_DEFAULT, response_option="headers")
-    js = download_webpage_with_post("https://hexupload.net", data=payload, headers=HEADER_DEFAULT, parse_as="json")
-    if 'text/html' not in pos['Content-Type']:
-        if url := js["link"]:
+    try:
+        payload = get_link_or_title(d, tag="form", raw=True)
+        payload.update({"dataType": "json", "ajax": "1"})
+        pos = download_webpage_with_post(
+            "https://hexupload.net",
+            data=payload,
+            headers=HEADER_DEFAULT,
+            response_option="headers",
+        )
+        js = download_webpage_with_post(
+            "https://hexupload.net",
+            data=payload,
+            headers=HEADER_DEFAULT,
+            parse_as="json",
+        )
+        if "text/html" not in pos["Content-Type"]:
+            url = js["link"]
+            if url:
+                url = decode_string(url, "base64")
+                return url.replace(" ", "%20")
+    except:
+        pass
+
+    try:
+        # for some part
+        payload = {
+            "op": "download2",
+            "id": getfilehost(url, hostname=False),
+            "rand": "",
+            "referer": url,
+            "method_free": "Free Download",
+        }
+        html = download_webpage_with_post(
+            url, form_data=payload, headers=HEADER_DEFAULT, parse_as="html"
+        )
+        url_match = re.search(r"ldl\.ld\('([^']+)", str(html))
+        if url_match:
+            url = url_match.group(1)
             url = decode_string(url, "base64")
-            return url.replace(' ', '%20')
+            return url.replace(" ", "%20")
+    except:
+        pass
 
-def hxfile(url: str) -> str:
-    """
-    Hxfile Direct Generator
-    Rewrite By Nekaru From PyBypasser and lk21
-    """
     d = download_webpage(url, headers=HEADER_DEFAULT)
     # get the form
     search_form = d.find("form", {"name": "F1"})
@@ -173,10 +218,8 @@ def hxfile(url: str) -> str:
     test_post = download_webpage_with_post(
         url, headers=get_new_headers({"Referer": url}), data=data
     )
-    dl_link = get_link_or_title(
-        test_post, tag="a", attr="href", args={"class": "btn btn-dow"}
-    )
-    return fix_url(dl_link, quote_fix=True)
+    dl_link_1 = get_link_or_title(test_post, css=".btn.btn-dow", raw=True)
+    return extract_data_regex(dl_link_1, preset="a_href", group=1)
 
 
 def sharezweb(
@@ -205,15 +248,11 @@ def sharezweb(
 
 # TODO Rename this here and in `sharezweb`
 def sharezweb_extractor(dl) -> dict:
-    cover = dl["data"]["itemInfo"].get("cover", "")
-    name = dl["data"]["itemInfo"].get("name", "")
-    utime = dl["data"]["itemInfo"].get("utime", "")
-    tipe = dl["data"]["itemInfo"].get("type", "")
-    sub_type = dl["data"]["itemInfo"].get("sub_type", "")
-    size = dl["data"]["itemInfo"].get("size", "")
-    video_link = dl["data"]["itemInfo"].get("url", "")
-    avatar = dl["data"]["userInfo"].get("avatar", "")
-    nickname = dl["data"]["userInfo"].get("nickname", "")
+    keys = ["cover", "name", "utime", "type", "sub_type", "size", "url"]
+    item_info = extract_json_data(dl["data"]["itemInfo"], keys)
+
+    keys = ["avatar", "nickname"]
+    user_info = extract_json_data(dl["data"]["userInfo"], keys)
 
     resolution_list = dl["data"]["itemInfo"].get("resolutionList", [])
     data = []
@@ -224,11 +263,11 @@ def sharezweb_extractor(dl) -> dict:
         video_link1 = resolution["url"]
         data.append(
             {
-                "cover": cover,
-                "name": name,
-                "time": utime,
+                "cover": item_info["cover"],
+                "name": item_info["name"],
+                "time": item_info["utime"],
                 "resolution": reso,
-                "type": tipe,
+                "type": item_info["type"],
                 "ext": sub_type1,
                 "size": get_readable_size(size1),
                 "url": video_link1,
@@ -236,18 +275,18 @@ def sharezweb_extractor(dl) -> dict:
         )
 
     return {
-        "avatar": avatar,
-        "nickname": nickname,
+        "avatar": user_info["avatar"],
+        "nickname": user_info["nickname"],
         "data": data,
         "data_orig": [
             {
-                "cover": cover,
-                "name": name,
-                "time": utime,
-                "type": tipe,
-                "ext": sub_type,
-                "size": get_readable_size(size),
-                "url": video_link,
+                "cover": item_info["cover"],
+                "name": item_info["name"],
+                "time": item_info["utime"],
+                "type": item_info["type"],
+                "ext": item_info["sub_type"],
+                "size": get_readable_size(item_info["size"]),
+                "url": item_info["url"],
             }
         ],
     }

@@ -1,63 +1,34 @@
-from typing import Any
+from typing import Any, Dict
 
 from util.html.parser import fix_url
 
 #  still in beta since i want grab some cookie
 
+class Cookie:
+    def __init__(self, cookie):
+        self.cookie = cookie
 
-def get_cookie(
-    cookie,
-    *,
-    debug: bool = False,
-    two: bool = False,
-    match: int = None,
-    match1: int = None
-) -> dict[str, Any]:
-    """
-    Extracts the Set-Cookie value from the headers of a request.
+    def clean(self) -> str:
+        return self.cookie.split(";")[0]
 
-    Args:
-        cookie: a request object.
-        debug (bool, optional): Prints the Set-Cookie value for debugging purposes. Defaults to False.
-        two (bool, optional): Extracts two Set-Cookie values. Defaults to False.
-        match (int, optional): The index of the Set-Cookie value to extract. Defaults to None.
-        match1 (int, optional): The index of the second Set-Cookie value to extract. Defaults to None.
+    def quote(self) -> str:
+        return fix_url(self.cookie, quote_plus=True)
 
-    Returns:
-        Dict[str, Any]: A dictionary of Set-Cookie values.
-    """
-    if two:
-        pas1 = cookie.headers["Set-Cookie"].split(" ")[match]
-        pas2 = cookie.headers["Set-Cookie"].split(" ")[match1]
-        return pas1, pas2
-    if debug:
-        return cookie.headers["Set-Cookie"].split(" ")
-    else:
-        pas = cookie.headers["Set-Cookie"].split(" ")[match]
-    return pas
+    def unquote(self) -> str:
+        return fix_url(self.cookie, unquote=True)
 
+class Request:
+    def __init__(self, headers):
+        self.headers = headers
 
-def fix_cookie(
-    cookie, *, default: bool = False, quote: bool = False, unquote: bool = False
-) -> Any:
-    """
-    Fixes a cookie by cleaning, quoting, or unquoting it.
+    def get_cookie(self, *, debug: bool = False, two: bool = False, match: int = None, match1: int = None) -> Union[str, Tuple[str, str]]:
+        if two:
+            pas1 = self.headers["Set-Cookie"].split(" ")[match]
+            pas2 = self.headers["Set-Cookie"].split(" ")[match1]
+            return pas1, pas2
+        if debug:
+            return self.headers["Set-Cookie"].split(" ")
+        else:
+            pas = self.headers["Set-Cookie"].split(" ")[match]
+        return pas
 
-    Args:
-        cookie (any): The cookie to fix.
-        default (bool, optional): Cleans the cookie by removing the ";" character. Defaults to False.
-        quote (bool, optional): Quotes the cookie using the quote_plus function. Defaults to False.
-        unquote (bool, optional): Unquotes the cookie using the unquote function. Defaults to False.
-
-    Returns:
-        Any: The fixed cookie.
-    """
-    if default:
-        return cookie.split(";")[0]
-    elif quote:
-        return fix_url(cookie, quote_plus=True)
-
-    if unquote and default:
-        return fix_url(cookie, unquote=True).split(";")[0]
-    else:
-        return fix_url(cookie, unquote=True)

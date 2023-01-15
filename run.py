@@ -119,6 +119,7 @@ def mediaStream():
         "fb.watch": fb,
         "facebook.com": fb,
         "vm.tiktok.com": tiktik,
+        "vt.tiktok.com": tiktik,
         "sck.io": snackvideo,
         "snackvideo.com": snackvideo,
         "s.helo-app.com": heloo,
@@ -133,7 +134,7 @@ def mediaStream():
         if domain == "pin.it":
             queri = fix_link(query)
             result = stream_handler(queri)
-        elif domain == "vm.tiktok.com":
+        elif domain == "vm.tiktok.com" or domain == "vt.tiktok.com":
             # extract the necessary fields from the result of the tiktik function
             b = stream_handler(queri)
             mp3 = b["data"]["mp3"]
@@ -162,15 +163,15 @@ def mediaStream():
 
 
 @app.route("/direct", methods=["GET"])
-def direct():
+def direct() -> dict[str, bool | str | dict[str, str]]:
     if not request.args.get("url"):
         return {"msg": "Masukan Url Anda"}
     query = request.args.get("url")
     d2 = direct_link(query)
-    try:
-        return {"Status": True, "dl_url": d2}
-    except Exception:
+    if isinstance(d2, dict):
         return d2
+    else:
+        return {"Status": True, "dl_url": d2}
 
 
 @app.route("/rom", methods=["GET"])
