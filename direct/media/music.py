@@ -5,6 +5,7 @@ import time
 from requests.utils import DEFAULT_ACCEPT_ENCODING
 
 from util.html.parser import cleanurl, get_bs4
+from util.network.http import req
 from util.network.http import rget, rpost, starter
 from util.utils import uegen
 
@@ -17,6 +18,7 @@ class spotify:
             "accept-language": "en-US,en;q=0.8",
             "origin": "https://spotifydown.com",
             "referer": "https://spotifydown.com/",
+            "content-type": "application/json; charset=utf-8",
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-site",
@@ -34,10 +36,12 @@ class spotify:
         return d.group(0)
 
     def down(self, queri):
-        down = rget(
+        down_1 = rget(
             f"https://{self.__api_link}/download/{self.song_queri(queri)}",
             headers=self.__headers,
-        ).json()
+        )
+        down = json.dumps(down_1.json(), indent=2, ensure_ascii=False)
+        down = json.loads(down)
         if "track" in self.check(queri):
             artis = down["metadata"]["artists"]
             title = down["metadata"]["title"]
@@ -48,10 +52,12 @@ class spotify:
             return {"dl_link": link}
 
     def metadata(self, queri):
-        mta = rget(
+        mta_1 = rget(
             f"https://{self.__api_link}/metadata/{self.check(queri)}/{self.song_queri(queri)}",
             headers=self.__headers,
-        ).json()
+        )
+        mta = json.dumps(mta_1.json(), indent=2, ensure_ascii=False)
+        mta = json.loads(mta)
         if "album" in self.check(queri) or "playlist" in self.check(queri):
             artis = mta["artists"]
             title = mta["title"]
@@ -67,7 +73,8 @@ class spotify:
             f"https://{self.__api_link}/trackList/{self.check(queri)}/{self.song_queri(queri)}",
             headers=self.__headers,
         )
-        meh = json.loads(trcklist.text)
+        meh = json.dumps(trcklist.json(), indent=2, ensure_ascii=False)
+        meh = json.loads(meh)
         meh = meh["trackList"]
         if "cover" in meh and meh["cover"] in (None, ""):
             meh.pop("cover")

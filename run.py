@@ -17,6 +17,7 @@ from util.html.parser import cleanurl, download_webpage, get_link_or_title, getf
 from util.utils import fix_link
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
 
 
 @app.route("/")
