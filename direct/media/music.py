@@ -42,13 +42,14 @@ class spotify:
         )
         down = json.dumps(down_1.json(), indent=2, ensure_ascii=False)
         down = json.loads(down)
+        down_2 = down_1.json()
         if "track" in self.check(queri):
             artis = down["metadata"]["artists"]
             title = down["metadata"]["title"]
-            link = down["link"]
+            link = down_2["link"]
             return {"artist": artis, "title": title, "dl_link": link}
         else:
-            link = down["link"]
+            link = down_2["link"]
             return {"dl_link": link}
 
     def metadata(self, queri):
@@ -58,6 +59,7 @@ class spotify:
         )
         mta = json.dumps(mta_1.json(), indent=2, ensure_ascii=False)
         mta = json.loads(mta)
+        mta_2 = mta_1.json()
         if "album" in self.check(queri) or "playlist" in self.check(queri):
             artis = mta["artists"]
             title = mta["title"]
@@ -65,7 +67,7 @@ class spotify:
             return {"title": title, "artist": artis, "cover": cover}
         elif "track" in self.check(queri):
             cover = mta["cover"]
-            isrc = mta["isrc"]
+            isrc = mta_2["isrc"]
             return {"cover": cover, "isrc": isrc}
 
     def tracklist(self, queri):
@@ -76,8 +78,9 @@ class spotify:
         meh = json.dumps(trcklist.json(), indent=2, ensure_ascii=False)
         meh = json.loads(meh)
         meh = meh["trackList"]
-        if "cover" in meh and meh["cover"] in (None, ""):
-            meh.pop("cover")
+        for track in meh:
+            if track.get('cover') in (None, "", "null"):
+                track.pop("cover")
         return meh
 
     def main(self, queri):
