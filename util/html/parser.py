@@ -1,7 +1,7 @@
 import codecs
 import json
 import re
-from typing import Any, Callable, List, Union
+from typing import Any
 from urllib.parse import quote as quot
 from urllib.parse import quote_plus as quot_plus
 from urllib.parse import unquote as unquot
@@ -380,6 +380,7 @@ def extract_form_data(form) -> dict[str, str]:
         data[name] = value
     return data
 
+
 def extract_json_data(json_data: dict, keys: list) -> dict:
     """
     Extracts data from a JSON object using a list of keys.
@@ -397,16 +398,17 @@ def extract_json_data(json_data: dict, keys: list) -> dict:
             extracted_data[key] = json_data[key]
     return extracted_data
 
+
 def js_to_json(js: str) -> dict:
     # Find the JSON object in the JavaScript string using a regular expression
-    match = re.search(r'\{.*\}', js)
+    match = re.search(r"\{.*\}", js)
     if match:
         # Extract the JSON object and parse it into a Python dictionary
         json_str = match.group(0)
         return json.loads(json_str)
     else:
         return {}
-    
+
 
 def extract_data_regex(
     html: str, preset: str = None, pattern: str = None, group: int = 0
@@ -502,4 +504,3 @@ def get_link_or_title(
         if process:
             data = process(data)
         return data
-

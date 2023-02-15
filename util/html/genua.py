@@ -2,8 +2,7 @@
 # https://github.com/ewwink/Real-Fake-Random-User-Agent/
 #
 
-import secrets
-
+import secrets, random
 
 def GetRandomUserAgent() -> str:
     """
@@ -25,25 +24,25 @@ def GetRandomUserAgent() -> str:
     ]
 
     OSsystem = secrets.choice(OS)
-    version = secrets.randbelow(108) + 81
-    randomBrowser = secrets.choice(browserType)
+    version = random.randint(81, 109)
+    randomBrowser = random.choice(browserType)
     browserTemplate = "Mozilla/5.0 ({0}; rv:{1}.0) Gecko/20100101 Firefox/{1}.0"
     finalVersion = version
 
     if randomBrowser in ["chrome", "opera", "edge"]:
-        patch = secrets.randbelow(359) + 4950
-        build = secrets.randbelow(212) + 72
+        patch = random.randint(4950, 5414)
+        build = random.randint(72, 284)
         browserTemplate = "Mozilla/5.0 ({0}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{1} Safari/537.36"
         finalVersion = f"{version}.0.{patch}.{build}"
 
         if randomBrowser == "opera":
-            version = secrets.randbelow(15) + 80
-            patch = secrets.randbelow(1107) + 3500
-            build = secrets.randbelow(212) + 26
+            version = random.randint(80, 94)
+            patch = random.randint(3500, 4616)
+            build = random.randint(26, 238)
             browserTemplate += f" OPR/{version}.0.{patch}.{build}"
         elif randomBrowser == "edge":
-            patch = secrets.randbelow(663) + 800
-            build = secrets.randbelow(60) + 40
+            patch = random.randint(800, 1518)
+            build = random.randint(40, 100)
             browserTemplate += f" Edg/{version}.0.{patch}.{build}"
 
     userAgent = browserTemplate.format(OSsystem, finalVersion)
@@ -64,9 +63,9 @@ def GenerateMobileUseragent() -> str:
     Returns:
         str: The generated mobile user agent string.
     """
-    version = secrets.randbelow(22) + 86
-    patch = secrets.randbelow(1065) + 4240
-    build = secrets.randbelow(159) + 54
+    version = random.randint(86, 109)
+    patch = random.randint(4240, 5414)
+    build = random.randint(54, 213)
     MOBILE_STRINGS = (
         "(Linux; Android 6.0; Nexus 5)",
         "(Linux; Android 7.0; Redmi Note 7 Pro)",
@@ -80,7 +79,20 @@ def GenerateMobileUseragent() -> str:
         "(Linux; Android 7.0; SM-G610M Build/NRD90M)",
         "(Linux; Android 6.0; vivo 1713 Build/MRA58K)",
         "(Linux; Android 7.1; Mi A1 Build/N2G47H)",
+        "(Linux; Android 10; JNY-LX1; HMSCore 6.3.0.326)",
+        "(Linux; Android 10; FRL-L23; HMSCore 5.2.0.318; GMSCore 21.12.12)",
+        "(Linux; Android 6.0.1; Redmi 4A Build/MMB29M)",
+        "(Linux; U; Android 9; ru-ru; Redmi 7A Build/PKQ1.190319.001)",
+        "(Linux; Android 8.1.0; Redmi Go)",
+        "(Linux; Android 8.0.0; moto g(6) play Build/OPP27.91-87)",
+        "(Linux; Android 10; moto g(7) Build/QPUS30.52-16-2-13)",
+        "(Linux; Android 9; moto g(7) play)",
     )
     device = secrets.choice(MOBILE_STRINGS)
-    baseline = f"Mozilla/5.0 {device} AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version}.0.{patch}.{build} Mobile Safari/537.36"
-    return baseline
+    chrome = f"Mozilla/5.0 {device} AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version}.0.{patch}.{build} Mobile Safari/537.36"
+    
+    android = random.randint(9, 13)
+    firefox = f"Mozilla/5.0 (Android {android}; Mobile; rv:68.0) Gecko/68.0 Firefox/{version}.0"
+
+    return random.choice([chrome, firefox])
+

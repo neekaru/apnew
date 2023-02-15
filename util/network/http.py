@@ -6,7 +6,7 @@ from util.utils import uegen
 req = requests.session()
 
 HEADER_DEFAULT: dict = {
-    "User-Agent": uegen(default=True),
+    "user-agent": uegen(default=True),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-us,en;q=0.6",
     "Sec-Fetch-Mode": "navigate",
@@ -14,24 +14,30 @@ HEADER_DEFAULT: dict = {
 
 
 def get_new_headers(
-    additional_headers: dict[str, str] = None, edit_headers: dict[str, str] = None
+    additional_headers: dict[str, str] = None, edit_headers: dict[str, str] = None, drop_headers: list[str] = None
 ) -> dict[str, str]:
     """
-    Returns a dictionary of headers that includes the headers in `HEADER_DEFAULT` as well as the additional headers. The headers in `HEADER_DEFAULT` can be modified using the `edit_headers` parameter.
+    Returns a dictionary of headers that includes the headers in `HEADER_DEFAULT` as well as the additional headers. The headers in `HEADER_DEFAULT` can be modified using the `edit_headers` parameter and removed using the `drop_headers` parameter.
 
     Args:
         - additional_headers (Optional[Dict[str, str]]): A dictionary of additional headers to be included in the returned dictionary. Defaults to None.
         - edit_headers (Optional[Dict[str, str]]): A dictionary of headers to modify in `HEADER_DEFAULT`. The keys in this dictionary should match the keys in `HEADER_DEFAULT`, and the values will be used to update the corresponding values in `HEADER_DEFAULT`. Defaults to None.
+        - drop_headers (Optional[List[str]]): A list of headers to remove from `HEADER_DEFAULT`. The keys in this list should match the keys in `HEADER_DEFAULT`. Defaults to None.
 
     Returns:
-        - Dict[str, str]: A dictionary of headers that includes the modified headers in `HEADER_DEFAULT` as well as the additional headers.
+        - Dict[str, str]: A dictionary of headers that includes the modified headers in `HEADER_DEFAULT` as well as the additional headers, with headers removed according to `drop_headers`.
     """
     headers = HEADER_DEFAULT
     if edit_headers:
         headers.update(edit_headers)
+    if drop_headers:
+        for header in drop_headers:
+            if header in headers:
+                del headers[header]
     if additional_headers:
         headers.update(additional_headers)
     return headers
+
 
 
 def cf():

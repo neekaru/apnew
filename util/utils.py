@@ -3,8 +3,8 @@ import binascii
 import contextlib
 import datetime
 import re
-import humanize
 
+import humanize
 import requests
 from fake_useragent import UserAgent
 
@@ -106,6 +106,7 @@ def csrfget(
     if csrf:
         return None
 
+
 def get_readable_time(
     seconds: int | float, unix_epoch: bool = False, utc: bool = False
 ) -> str:
@@ -126,17 +127,25 @@ def get_readable_time(
     if unix_epoch:
         # If the unix_epoch argument is set to True, we need to convert the given seconds value to the equivalent
         # time based on the Unix epoch.
-        return humanize.naturaltime(datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc if utc else None))
+        return humanize.naturaltime(
+            datetime.datetime.fromtimestamp(
+                seconds, tz=datetime.timezone.utc if utc else None
+            )
+        )
     else:
         # If the unix_epoch argument is not set, we can use the given seconds value to create a datetime object
         # representing the current date and time, and then subtract or add the number of seconds from/to it to get the
         # desired time.
         if seconds < 0:
             # If the seconds value is negative, subtract the number of seconds from the current date and time.
-            time = datetime.datetime.now(tz=datetime.timezone.utc if utc else None) - datetime.timedelta(seconds=abs(seconds))
+            time = datetime.datetime.now(
+                tz=datetime.timezone.utc if utc else None
+            ) - datetime.timedelta(seconds=abs(seconds))
         else:
             # If the seconds value is positive, add the number of seconds to the current date and time.
-            time = datetime.datetime.now(tz=datetime.timezone.utc if utc else None) + datetime.timedelta(seconds=seconds)
+            time = datetime.datetime.now(
+                tz=datetime.timezone.utc if utc else None
+            ) + datetime.timedelta(seconds=seconds)
 
         return humanize.naturaltime(time)
 

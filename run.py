@@ -17,8 +17,6 @@ from util.html.parser import cleanurl, download_webpage, get_link_or_title, getf
 from util.utils import fix_link
 
 app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
-
 
 @app.route("/")
 def index():
@@ -59,8 +57,10 @@ def berita():
 def song(path1):
     if "spotify" in path1:
         if song := request.args.get("song"):
+            app.config['JSON_AS_ASCII'] = False
             return spotify().main(song)
         else:
+            app.config['JSON_AS_ASCII'] = True
             return {"Status": False, "msg": "No song specified"}
 
 
@@ -118,7 +118,7 @@ def mediaStream():
         "pin.it": pinterest,
         "twitter.com": twitter,
         "fb.watch": fb,
-        "facebook.com": fb,
+        "www.facebook.com": fb,
         "vm.tiktok.com": tiktik,
         "vt.tiktok.com": tiktik,
         "sck.io": snackvideo,
@@ -164,7 +164,7 @@ def mediaStream():
 
 
 @app.route("/direct", methods=["GET"])
-def direct() -> dict[str, bool | str | dict[str, str]]:
+def direct():
     if not request.args.get("url"):
         return {"msg": "Masukan Url Anda"}
     query = request.args.get("url")
