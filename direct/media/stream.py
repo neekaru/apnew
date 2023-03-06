@@ -1,7 +1,9 @@
 import json
 import time
+import re
 
 from requests.utils import DEFAULT_ACCEPT_ENCODING
+from bs4 import BeautifulSoup
 
 from util.html.parser import (
     download_webpage,
@@ -31,12 +33,14 @@ class helo:
             "Upgrade-Insecure-Requests": "1",
         }
 
+
     def parser_json_from_element(self, element):
-        # Extract the JSON object from the script element
-        json_string = element.string  # Get the contents of the Tag object as a string
-        json_string = json_string.replace(
+        soup = BeautifulSoup(element, 'html.parser').find("script")
+        soup = soup.prettify()
+        cleaned = re.sub(r'(<script>)\s+|\s+(</script>)', r'\1\2', soup)
+        json_string = cleaned.replace(
             "<script>window.__INITIAL_STATE__=", ""
-        ).replace("window.__INITIAL_STATE__=", "")
+        ).replace("window.__INITIAL_STATE__=", "").replace("</script>", "")
         json_string = (
             fix_annoy(json_string, double_newline=True)
             .replace("   ", "")
@@ -44,114 +48,60 @@ class helo:
             .replace("       ", "")
             .replace("undefined", '""')
         )
-        return json.loads(json_string)
+        json_string = json.dumps(json_string).replace("\\", "")
+        return json_string
+        #cleaned = cleaned.replace("<script>window.__INITIAL_STATE__=", "")
+        #cleaned = cleaned.rstrip(";").rstrip("</script>").strip()
 
-    def result(self, url):
-        d = download_webpage(url, headers=self.__headers, parse_as="html")
+    def result(self, query):
+        d = download_webpage(query, headers=self.__headers, parse_as="html")
         p = get_link_or_title(d, tag="script", multiple=True, raw=True)[5]
         # this need to extract them
         d = self.parser_json_from_element(p)
-        base_video = d["ArticleDetailInfo"]["share_download_video"]["cdn_url"]
-        url_list = d["ArticleDetailInfo"]["video"]["url_list"]
-        wm_list = d["ArticleDetailInfo"]["share_download_video"]["url_list"]
-        data = []
-        data1 = []
-        for url_obj in url_list:
-            text = url_obj["text"]
-            size = url_obj["size"]
-            expired = url_obj["url_expire"]
-            urls = url_obj["urls"][0]
-            data.append(
-                {
-                    "text": text,
-                    "size": get_readable_size(size),
-                    "urls": urls,
-                    "expired": get_readable_time(expired, unix_epoch=True),
-                }
-            )
-        for url_wm in wm_list:
-            text = url_wm["text"]
-            size = url_wm["size"]
-            expired = url_wm["url_expire"]
-            urls = url_wm["urls"][0]
-            data1.append(
-                {
-                    "text": text,
-                    "size": get_readable_size(size),
-                    "urls": urls,
-                    "expired": get_readable_time(expired, unix_epoch=True),
-                }
-            )
-        result = {
-            "Status": True,
-            "data": [{"base_video": base_video, "no_wm": data, "wm_data": data1}],
-        }
-        return result
+        return d
+        # base_video = d["ArticleDetailInfo"]["share_download_video"]["cdn_url"]
+        # url_list = d["ArticleDetailInfo"]["video"]["url_list"]
+        # wm_list = d["ArticleDetailInfo"]["share_download_video"]["url_list"]
+        # data = []
+        # data1 = []
+        # for url_obj in url_list:
+        #     text = url_obj["text"]
+        #     size = url_obj["size"]
+        #     expired = url_obj["url_expire"]
+        #     urls = url_obj["urls"][0]
+        #     data.append(
+        #         {
+        #             "text": text,
+        #             "size": get_readable_size(size),
+        #             "urls": urls,
+        #             "expired": get_readable_time(expired, unix_epoch=True),
+        #         }
+        #     )
+        # for url_wm in wm_list:
+        #     text = url_wm["text"]
+        #     size = url_wm["size"]
+        #     expired = url_wm["url_expire"]
+        #     urls = url_wm["urls"][0]
+        #     data1.append(
+        #         {
+        #             "text": text,
+        #             "size": get_readable_size(size),
+        #             "urls": urls,
+        #             "expired": get_readable_time(expired, unix_epoch=True),
+        #         }
+        #     )
+        # result = {
+        #     "Status": True,
+        #     "data": [{"base_video": base_video, "no_wm": data, "wm_data": data1}],
+        # }
+        # return result
 
 
 def fb(url):
-    starter("https://fdown.net", single=True)
-    headers = {
-        "User-Agent": uegen(default=True),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": DEFAULT_ACCEPT_ENCODING,
-        "Origin": "https://fdown.net",
-        "Connection": "keep-alive",
-        "Referer": "https://fdown.net/",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-User": "?1",
-    }
-
-    data = {
-        "URLz": url,
-    }
-    bs4 = download_webpage_with_post(
-        "https://fdown.net/download.php", headers=headers, data=data
-    )
-    sd = get_link_or_title(bs4, tag="a", attr="href", args="#sdlink")
-    hd = get_link_or_title(bs4, tag="a", attr="href", args="#hdlink")
-    image_url = get_link_or_title(bs4, tag="img", attr="src", args=".lib-img-show")
-    title = get_link_or_title(
-        bs4,
-        tag="div",
-        args="div.lib-row:nth-child(1)",
-        process=fix_annoy,
-        double_newline=True,
-    )
-    des = get_link_or_title(
-        bs4,
-        tag="div",
-        args="div.lib-row:nth-child(2)",
-        process=fix_annoy,
-        double_newline=True,
-        remove_part="Description: ",
-    )
-    waktu = get_link_or_title(
-        bs4,
-        tag="div",
-        args="div.lib-row:nth-child(3)",
-        process=fix_annoy,
-        double_newline=True,
-        remove_part="Duration: ",
-    )
-    return {
-        "Status": True,
-        "data": [
-            {
-                "title": title,
-                "description": des,
-                "waktu": waktu,
-                "video_sd": sd,
-                "video_hd": hd,
-                "image_url": image_url,
-            }
-        ],
-    }
-
+    """
+    Extractor Facebook
+    """
+    return
 
 def twitter(query):
     starter("https://www.expertsphp.com/twitter-video-downloader.php")
@@ -245,7 +195,7 @@ def instagram(query):
     }
     headers = {
         "referer": "https://saveig.app/en/instagram-video-downloader",
-        "cookie": Cookie(Request(d1).get_cookie(match=0)).clean(),
+        "cookie": Cookie(Request(d1.headers).get_cookie(match=0)).clean(),
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "content-length": "248",
         "x-requested-with": "XMLHttpRequest",

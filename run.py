@@ -112,7 +112,6 @@ def get_domain(url):
 
 @app.route("/stream", methods=["GET"])
 def mediaStream():
-    heloo = helo().result
     stream_handlers = {
         "pinterest.com": pinterest,
         "pin.it": pinterest,
@@ -123,7 +122,7 @@ def mediaStream():
         "vt.tiktok.com": tiktik,
         "sck.io": snackvideo,
         "snackvideo.com": snackvideo,
-        "s.helo-app.com": heloo,
+        "s.helo-app.com": lambda: helo().result(query),
     }
 
     if not request.args.get("url"):
@@ -135,9 +134,11 @@ def mediaStream():
         if domain == "pin.it":
             queri = fix_link(query)
             result = stream_handler(queri)
+        elif domain == "s.helo-app.com":
+            result = stream_handler()
         elif domain == "vm.tiktok.com" or domain == "vt.tiktok.com":
             # extract the necessary fields from the result of the tiktik function
-            b = stream_handler(queri)
+            b = stream_handler(query)
             mp3 = b["data"]["mp3"]
             mp4 = b["data"]["mp4"]
             thumb = b["data"]["video_img"]
@@ -161,6 +162,7 @@ def mediaStream():
         return {"msg": f"keep silent {e}"}
     except Exception as e:
         return e
+
 
 
 @app.route("/direct", methods=["GET"])
