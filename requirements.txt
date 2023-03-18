@@ -1,12 +1,11 @@
 BeautifulSoup4
 defusedxml
 fake-useragent
-flask
+cherrypy
 get-useragents
 # for support brotli
 https://github.com/google/brotli/archive/refs/heads/master.zip
 https://github.com/mansuf/zippyshare-downloader/archive/refs/heads/main.zip
-humanize
 PyBypass
 requests
 w3lib
