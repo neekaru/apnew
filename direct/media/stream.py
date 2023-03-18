@@ -4,6 +4,8 @@ import re
 
 from requests.utils import DEFAULT_ACCEPT_ENCODING
 from bs4 import BeautifulSoup
+from datetime import datetime, date
+from decimal import Decimal
 
 from util.html.parser import (
     download_webpage,
@@ -17,6 +19,56 @@ from util.network.cookie import Cookie, Request
 from util.network.http import HEADER_DEFAULT, rget, starter
 from util.utils import get_readable_size, get_readable_time, uegen
 
+# for handling helo new
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        elif isinstance(obj, Decimal):
+            return float(obj)
+        elif isinstance(obj, bytes):
+            return obj.decode('utf-8', 'ignore')
+        elif isinstance(obj, str):
+            # Remove non-valid symbols
+            obj = re.sub(r'[^\x00-\x7F]+', '', obj)
+            # Escape special characters
+            obj = obj.encode('unicode_escape').decode('utf-8')
+            return obj
+        elif obj is None:
+            return ''
+        else:
+            return super().default(obj)
+
+    def encode(self, obj):
+        # Remove occurrences of multiple spaces
+        result = super().encode(obj).replace("   ", " ").replace("  ", " ")
+        # Remove occurrences of "undefined"
+        result = re.sub(r'"undefined"', '""', result)
+
+        # Fix multiple JSON elements and string wrapping
+        result = result.strip().strip('"')
+        if result.startswith('[') and result.endswith(']'):
+            return result
+        elif result.startswith('{') and result.endswith('}'):
+            return result
+        else:
+            try:
+                # Try to parse as number
+                float(result)
+                return result
+            except ValueError:
+                pass
+
+            # Escape special characters
+            result = result.encode('unicode_escape').decode('utf-8')
+
+            # Add quotes around the string
+            result = f'"{result}"'
+
+            # Fix the "Expecting comma or }" error
+            result = re.sub(r'"([^"]+)":\s*"({[^}]+})"+([^"])"', r'"\1": \2,\3', result)
+
+            return result
 
 class helo:
     def __init__(self):
@@ -33,6 +85,15 @@ class helo:
             "Upgrade-Insecure-Requests": "1",
         }
 
+    def clean_json(self, json_str):
+        # Define regular expression to match "media_label" keys and their values
+        media_label_re = re.compile(r',"media_label":"{[^{}]*}"')
+
+        # Remove all occurrences of "media_label" keys and their values
+        cleaned_json_str = media_label_re.sub('', json_str)
+
+        # Return the cleaned JSON data
+        return cleaned_json_str
 
     def parser_json_from_element(self, element):
         soup = BeautifulSoup(element, 'html.parser').find("script")
@@ -48,7 +109,10 @@ class helo:
             .replace("       ", "")
             .replace("undefined", '""')
         )
-        json_string = json.dumps(json_string).replace("\\", "")
+        json_string = json.dumps(json_string, cls=CustomEncoder, ensure_ascii=False).replace("\\", "")
+        json_string = self.clean_json(json_string)
+        json_string = json_string.replace("u002F", "/").replace("u003E", ">").replace("u003C", "<")
+        json_string = json.loads(json_string)
         return json_string
         #cleaned = cleaned.replace("<script>window.__INITIAL_STATE__=", "")
         #cleaned = cleaned.rstrip(";").rstrip("</script>").strip()
@@ -59,42 +123,42 @@ class helo:
         # this need to extract them
         d = self.parser_json_from_element(p)
         return d
-        # base_video = d["ArticleDetailInfo"]["share_download_video"]["cdn_url"]
-        # url_list = d["ArticleDetailInfo"]["video"]["url_list"]
-        # wm_list = d["ArticleDetailInfo"]["share_download_video"]["url_list"]
-        # data = []
-        # data1 = []
-        # for url_obj in url_list:
-        #     text = url_obj["text"]
-        #     size = url_obj["size"]
-        #     expired = url_obj["url_expire"]
-        #     urls = url_obj["urls"][0]
-        #     data.append(
-        #         {
-        #             "text": text,
-        #             "size": get_readable_size(size),
-        #             "urls": urls,
-        #             "expired": get_readable_time(expired, unix_epoch=True),
-        #         }
-        #     )
-        # for url_wm in wm_list:
-        #     text = url_wm["text"]
-        #     size = url_wm["size"]
-        #     expired = url_wm["url_expire"]
-        #     urls = url_wm["urls"][0]
-        #     data1.append(
-        #         {
-        #             "text": text,
-        #             "size": get_readable_size(size),
-        #             "urls": urls,
-        #             "expired": get_readable_time(expired, unix_epoch=True),
-        #         }
-        #     )
-        # result = {
-        #     "Status": True,
-        #     "data": [{"base_video": base_video, "no_wm": data, "wm_data": data1}],
-        # }
-        # return result
+        base_video = d["ArticleDetailInfo"]["share_download_video"]["cdn_url"]
+        url_list = d["ArticleDetailInfo"]["video"]["url_list"]
+        wm_list = d["ArticleDetailInfo"]["share_download_video"]["url_list"]
+        data = []
+        data1 = []
+        for url_obj in url_list:
+            text = url_obj["text"]
+            size = url_obj["size"]
+            expired = url_obj["url_expire"]
+            urls = url_obj["urls"][0]
+            data.append(
+                {
+                    "text": text,
+                    "size": get_readable_size(size),
+                    "urls": urls,
+                    "expired": get_readable_time(expired, unix_epoch=True),
+                }
+            )
+        for url_wm in wm_list:
+            text = url_wm["text"]
+            size = url_wm["size"]
+            expired = url_wm["url_expire"]
+            urls = url_wm["urls"][0]
+            data1.append(
+                {
+                    "text": text,
+                    "size": get_readable_size(size),
+                    "urls": urls,
+                    "expired": get_readable_time(expired, unix_epoch=True),
+                }
+            )
+        result = {
+            "Status": True,
+            "data": [{"base_video": base_video, "no_wm": data, "wm_data": data1}],
+        }
+        return result
 
 
 def fb(url):
