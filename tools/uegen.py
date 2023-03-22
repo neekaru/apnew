@@ -1,25 +1,26 @@
 import random
 import secrets
+
 from fake_useragent import UserAgent
 
 
 class User_Agent:
-    def __init__(self):
+    def __init__():
         return
 
+    @staticmethod
     def uegen(
-        self,
         *,
         default: bool | None = False,
         mobile: bool | None = False,
         random: bool | None = False,
         alter: bool | None = False,
-        spesific: list[str] | None = None
+        spesific: list[str] | None = None,
     ):
         if default:
-            return self.GetRandomUserAgent()
+            return User_Agent.GetRandomUserAgent()
         elif mobile:
-            return self.GenerateMobileUseragent()
+            return User_Agent.GenerateMobileUseragent()
 
         if random:
             ua = UserAgent(
@@ -38,7 +39,8 @@ class User_Agent:
             return ua1.random
         return ""
 
-    def GenerateMobileUseragent(self) -> str:
+    @staticmethod
+    def GenerateMobileUseragent() -> str:
         version = random.randint(86, 109)
         patch = random.randint(4240, 5414)
         build = random.randint(54, 213)
@@ -72,7 +74,8 @@ class User_Agent:
 
         return random.choice([chrome, firefox])
 
-    def GetRandomUserAgent(self) -> str:
+    @staticmethod
+    def GetRandomUserAgent() -> str:
         browserType = ["firefox", "chrome", "opera", "edge"]
         OS = [
             "Windows NT 10.0; Win64; x64",

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        text-align: center;
+      }
+      form {
+        display: inline-block;
+      }
+      table {
+        margin: 0 auto;
+        border-collapse: collapse;
+        text-align: center;
+      }
+      th, td {
+        border: 1px solid black;
+        padding: 8px;
+      }
+    </style>
+    <title>{{ title }}</title>
+  </head>
+  <body>
+    <h1>Finder Song</h1>
+    <form action="/music" method="get">
+      <input type="text" name="url" placeholder="Enter your link here">
+      <br><br>
+      <input type="submit" value="Search">
+    </form> 
+    {% if data %}
+    <h2>Song/Album Details</h2>
+    <table>
+      <tr><th>Title</th><td><span id="title">{{ data.title }}</span></td></tr>
+      <tr><th>Artist</th><td><span id="artist">{{ data.artist }}</span></td></tr>
+      <tr><th>Thumbnail</th><td><img src="{{ data.thumb }}" alt="Thumbnail" width="300"></td></tr>
+      <!-- Add an if statement here to conditionally display the ISRC row -->
+      {% if data.isrc %}
+      <tr><th>ISRC</th><td>{{ data.isrc }}</td></tr>
+      {% endif %}
+      {% if data.duration %}
+      <tr><th>Duration</th><td>{{ data.duration }}</td></tr>
+      {% endif %}
+      {% if data.release_date %}
+      <tr><th>Release Date</th><td>{{ data.release_date }}</td></tr>
+      {% endif %}
+    </table>
+    {% if data.list %}
+    <h2>Available on:</h2>
+    <table>
+      {% for item in data.list %}
+        <tr>
+          <th>{{ item.display_name }}</th>
+          <td><a href="{{ item.url }}">{{ item.url }}</a></td>
+        </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+    {% endif %}
+    <script>
+        // Function to split a string into multiple lines at a specified line length
+        function splitLines(str, len) {
+          let result = '';
+          let line = '';
+          str.split(' ').forEach(word => {
+            if (line.length + word.length > len) {
+              result += line + '\n';
+              line = '';
+            }
+            line += word + ' ';
+          });
+          result += line;
+          return result;
+        }
+      
+        // Get the title and artist elements
+        const titleElem = document.getElementById('title');
+        const artistElem = document.getElementById('artist');
+      
+        // Split the title and artist text into multiple lines
+        titleElem.innerText = splitLines(titleElem.innerText, 20);
+        artistElem.innerText = splitLines(artistElem.innerText, 20);
+      </script>
+  </body>
+</html>
