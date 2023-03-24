@@ -1,14 +1,14 @@
 BeautifulSoup4
+cherrypy
+cloudscraper
 defusedxml
 fake-useragent
-cloudscraper
 get-useragents
-httpx[http2]
 # for support brotli
 https://github.com/google/brotli/archive/refs/heads/master.zip
 https://github.com/mansuf/zippyshare-downloader/archive/refs/heads/main.zip
+httpx[http2]
+jinja2
 PyBypass
 requests
-jinja2
 w3lib
-cherrypy

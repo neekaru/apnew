@@ -1,15 +1,19 @@
 from urllib.parse import urlparse
 
 import cherrypy
-from jinja2 import Environment, FileSystemLoader
+import httpx
+import requests
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 from direct.file_share import File
 from direct.media import Odelsi
-import requests
-import httpx
-from handling.error import CustomException, SongInfoNotFoundError
-env = Environment(loader=FileSystemLoader('templates'))
 
-class Home(object):
+env = Environment(
+    loader=FileSystemLoader("templates"), autoescape=select_autoescape(["html", "xml"])
+)
+
+
+class Home:
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def index(self):
@@ -28,7 +32,9 @@ class Home(object):
             return d
         except (requests.ConnectTimeout, httpx.ConnectTimeout):
             # handle error case here
-            return cherrypy.HTTPError("500", "Backend Sedang Ada Masalah Mohon di Ulang Kembali Request nya")
+            return cherrypy.HTTPError(
+                "500", "Backend Sedang Ada Masalah Mohon di Ulang Kembali Request nya"
+            )
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

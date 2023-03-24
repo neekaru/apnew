@@ -1,3 +1,5 @@
+from typing import Optional
+
 import cloudscraper
 import httpx
 import requests
@@ -17,31 +19,45 @@ HEADER_DEFAULT: dict = {
 
 class Request:
     def __init__(self, url: str):
-        self.url = url
+        self.url: str = url
 
-    def rpost(self, single: bool = False, http2: bool = False, *args, **kwargs):
+    def rpost(
+        self,
+        single: bool = False,
+        http2: bool = False,
+        timeout: Optional[float] = None,
+        *args,
+        **kwargs,
+    ) -> requests.Response:
         """
         Sends a POST request to the specified URL.
         """
         if http2:
-            return req_2.post(self.url, *args, **kwargs)
+            return req_2.post(self.url, timeout=timeout, *args, **kwargs)
 
         if single:
-            return requests.post(self.url, *args, **kwargs)
+            return requests.post(self.url, timeout=timeout, *args, **kwargs)
 
-        return req.post(self.url, *args, **kwargs)
+        return req.post(self.url, timeout=timeout, *args, **kwargs)
 
-    def rget(self, single: bool = False, http2: bool = False, *args, **kwargs):
+    def rget(
+        self,
+        single: bool = False,
+        http2: bool = False,
+        timeout: Optional[float] = None,
+        *args,
+        **kwargs,
+    ) -> requests.Response:
         """
         Sends a GET request to the specified URL.
         """
         if http2:
-            return req_2.get(self.url, *args, **kwargs)
+            return req_2.get(self.url, timeout=timeout, *args, **kwargs)
 
         if single:
-            return requests.get(self.url, *args, **kwargs)
+            return requests.get(self.url, timeout=timeout, *args, **kwargs)
 
-        return req.get(self.url, *args, **kwargs)
+        return req.get(self.url, timeout=timeout, *args, **kwargs)
 
 
 class Request_Add:
@@ -53,8 +69,7 @@ class Request_Add:
         Just wannabe cf temporary
         """
         reqcq = cloudscraper.create_scraper(
-            browser={"browser": "chrome",
-                     "platform": "windows", "mobile": False}
+            browser={"browser": "chrome", "platform": "windows", "mobile": False}
         )
         reqcq.headers.update(
             {
@@ -82,7 +97,7 @@ class Request_Add:
             headers.update(additional_headers)
         return headers
 
-    def starter(self, *, single: bool = False):
+    def starter(self, *, single: bool = False, timeout: Optional[float] = None):
         """
         Makes a request to a website and disguises it as a visit by a real user.
         """
@@ -93,6 +108,6 @@ class Request_Add:
             "Sec-Fetch-Mode": "navigate",
         }
         if single:
-            return requests.get(self.url, headers=headers)
+            return requests.get(self.url, timeout=timeout, headers=headers)
 
-        return req.get(self.url, headers=headers)
+        return req.get(self.url, timeout=timeout, headers=headers)

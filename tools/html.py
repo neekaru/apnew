@@ -1,3 +1,5 @@
+from typing import Union
+
 from bs4 import BeautifulSoup
 
 
@@ -5,7 +7,7 @@ class Parser:
     def __init__(self, data):
         self.data = data
 
-    def get_bs4(self) -> BeautifulSoup | None:
+    def get_bs4(self) -> Union[BeautifulSoup, None]:
         try:
             return BeautifulSoup(self.data, "html.parser")
         except Exception:

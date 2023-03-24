@@ -5,8 +5,10 @@ import cherrypy
 class TestException(Exception):
     pass
 
+
 class SongInfoNotFoundError(Exception):
     pass
+
 
 class CustomException(Exception):
     def __init__(self, title, message, show_html=False):

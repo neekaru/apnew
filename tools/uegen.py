@@ -1,5 +1,6 @@
 import random
 import secrets
+from typing import Optional, Union
 
 from fake_useragent import UserAgent
 
@@ -11,12 +12,12 @@ class User_Agent:
     @staticmethod
     def uegen(
         *,
-        default: bool | None = False,
-        mobile: bool | None = False,
-        random: bool | None = False,
-        alter: bool | None = False,
-        spesific: list[str] | None = None,
-    ):
+        default: Union[bool, None] = False,
+        mobile: Union[bool, None] = False,
+        random: Union[bool, None] = False,
+        alter: Union[bool, None] = False,
+        spesific: Optional[list[str]] = None,
+    ) -> None:
         if default:
             return User_Agent.GetRandomUserAgent()
         elif mobile:
@@ -41,9 +42,9 @@ class User_Agent:
 
     @staticmethod
     def GenerateMobileUseragent() -> str:
-        version = random.randint(86, 109)
-        patch = random.randint(4240, 5414)
-        build = random.randint(54, 213)
+        version = random.randint(86, 109)  # nosec
+        patch = random.randint(4240, 5414)  # nosec
+        build = random.randint(54, 213)  # nosec
         MOBILE_STRINGS = (
             "(Linux; Android 6.0; Nexus 5)",
             "(Linux; Android 7.0; Redmi Note 7 Pro)",
@@ -69,10 +70,10 @@ class User_Agent:
         device = secrets.choice(MOBILE_STRINGS)
         chrome = f"Mozilla/5.0 {device} AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version}.0.{patch}.{build} Mobile Safari/537.36"
 
-        android = random.randint(9, 13)
+        android = random.randint(9, 13)  # nosec
         firefox = f"Mozilla/5.0 (Android {android}; Mobile; rv:68.0) Gecko/68.0 Firefox/{version}.0"
 
-        return random.choice([chrome, firefox])
+        return random.choice([chrome, firefox])  # nosec
 
     @staticmethod
     def GetRandomUserAgent() -> str:
@@ -84,26 +85,26 @@ class User_Agent:
         ]
 
         OSsystem = secrets.choice(OS)
-        version = random.randint(81, 109)
-        randomBrowser = random.choice(browserType)
+        version = random.randint(81, 109)  # nosec
+        randomBrowser = random.choice(browserType)  # nosec
         browserTemplate = "Mozilla/5.0 ({0}; rv:{1}.0) Gecko/20100101 Firefox/{1}.0"
         finalVersion = version
 
         if randomBrowser in ["chrome", "opera", "edge"]:
-            patch = random.randint(4950, 5414)
-            build = random.randint(72, 284)
+            patch = random.randint(4950, 5414)  # nosec
+            build = random.randint(72, 284)  # nosec
             browserTemplate = "Mozilla/5.0 ({0}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{1} Safari/537.36"
             finalVersion = f"{version}.0.{patch}.{build}"
 
         if randomBrowser == "opera":
-            version = random.randint(80, 94)
-            patch = random.randint(3500, 4616)
-            build = random.randint(26, 238)
+            version = random.randint(80, 94)  # nosec
+            patch = random.randint(3500, 4616)  # nosec
+            build = random.randint(26, 238)  # nosec
             browserTemplate += f" OPR/{version}.0.{patch}.{build}"
 
         elif randomBrowser == "edge":
-            patch = random.randint(800, 1518)
-            build = random.randint(40, 100)
+            patch = random.randint(800, 1518)  # nosec
+            build = random.randint(40, 100)  # nosec
             browserTemplate += f" Edg/{version}.0.{patch}.{build}"
 
         userAgent = browserTemplate.format(OSsystem, finalVersion)

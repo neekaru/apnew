@@ -26,7 +26,7 @@
       <input type="text" name="url" placeholder="Enter your link here">
       <br><br>
       <input type="submit" value="Search">
-    </form> 
+    </form>
     {% if data %}
     <h2>Song/Album Details</h2>
     <table>
@@ -71,11 +71,11 @@
           result += line;
           return result;
         }
-      
+
         // Get the title and artist elements
         const titleElem = document.getElementById('title');
         const artistElem = document.getElementById('artist');
-      
+
         // Split the title and artist text into multiple lines
         titleElem.innerText = splitLines(titleElem.innerText, 20);
         artistElem.innerText = splitLines(artistElem.innerText, 20);

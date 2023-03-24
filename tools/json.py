@@ -2,8 +2,9 @@
 
 import json
 import re
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
+
 from tools.url import Url
 
 
@@ -53,17 +54,18 @@ class CustomEncoder(json.JSONEncoder):
             result = f'"{result}"'
 
             # Fix the "Expecting comma or }" error
-            result = re.sub(
-                r'"([^"]+)":\s*"({[^}]+})"+([^"])"', r'"\1": \2,\3', result)
+            result = re.sub(r'"([^"]+)":\s*"({[^}]+})"+([^"])"', r'"\1": \2,\3', result)
 
             return result
 
 
 def decode_unicode(data):
     if isinstance(data, str):
-        return re.sub(r'u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), data)
+        return re.sub(r"u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), data)
     elif isinstance(data, dict):
-        return {decode_unicode(key): decode_unicode(value) for key, value in data.items()}
+        return {
+            decode_unicode(key): decode_unicode(value) for key, value in data.items()
+        }
     elif isinstance(data, list):
         return [decode_unicode(item) for item in data]
     else:
@@ -77,6 +79,10 @@ def json_dumps_fix(d: None, double_slash: bool = False, hard_fix: bool = False):
 
     if hard_fix is True:
         dl = Url(d).fix_annoy(double_newline=True)
-        dl = dl.replace("   ", "").replace("       ", "").replace(
-            "       ", "").replace("undefined", '""')
+        dl = (
+            dl.replace("   ", "")
+            .replace("       ", "")
+            .replace("       ", "")
+            .replace("undefined", '""')
+        )
     return dl

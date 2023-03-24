@@ -13,4 +13,4 @@ class File:
 
     def krakenfiles_result(self):
         htt = Request(self.url).rget(http2=True).text
-        pp = Parser(htt).get_bs4()
+        Parser(htt).get_bs4()

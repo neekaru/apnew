@@ -1,5 +1,6 @@
 import codecs
 import re
+from typing import Optional, Union
 from urllib.parse import quote as quot
 from urllib.parse import quote_plus as quot_plus
 from urllib.parse import unquote as unquot
@@ -27,9 +28,9 @@ class Url:
         self,
         double_newline: bool = False,
         double_space: bool = False,
-        remove_part: str | None = None,
-        unicode_escape: bool | None = None,
-        weird_unicode_remover: bool | None = None,
+        remove_part: Optional[str] = None,
+        unicode_escape: Optional[bool] = None,
+        weird_unicode_remover: Optional[bool] = None,
     ):
         if double_newline:
             bs4 = self.bs4.replace("\n", "").rstrip()
@@ -52,7 +53,7 @@ class Url:
         quote: bool = False,
         quote_fix: bool = False,
         unquote: bool = False,
-    ) -> str | None:
+    ) -> Union[str, None]:
         if quote_fix:
             return quot(str(self.url), safe="/:")
         elif unquote:
