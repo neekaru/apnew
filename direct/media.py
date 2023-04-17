@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import timedelta
 
 from handling.error import SongInfoNotFoundError
@@ -7,10 +8,26 @@ from tools.http import Request, Request_Add
 from tools.json import decode_unicode, json_dumps_fix
 from tools.url import Url
 
-
+class Fix_url:
+    # this need for fixing some url stuff
+    def __init__(self, url: str) -> None:
+        self.url = url
+        
+    def odelsi_fix_url(self):
+        if "spotify" in self.url:
+            pattern = r"https:\/\/open\.spotify\.com\/(?:intl-id\/)?(track|album)\/([\w]+).*"
+            match = re.match(pattern, self.url)
+            if match:
+                # change this to using format style not concat using + instead using .format()
+                fixed_url = "https://open.spotify.com/{}/{}".format(match.group(1), match.group(2))
+                return fixed_url
+            else:
+                return None
+        else:
+            return self.url
 class Odelsi:
     def __init__(self, url):
-        self.url = url
+        self.url = Fix_url(url).odelsi_fix_url()
         self._api_url_resolve = "https://api.odesli.co"
         self._base_song = "https://song.link"
         self._base_album = "https://album.link"
