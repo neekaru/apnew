@@ -10,7 +10,7 @@ from tools.url import Url
 
 class Fix_url:
     # this need for fixing some url stuff
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str) -> Any:
         self.url = url
         
     def odelsi_fix_url(self):
